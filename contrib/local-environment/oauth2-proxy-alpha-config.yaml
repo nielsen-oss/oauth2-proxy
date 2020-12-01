@@ -1,0 +1,5 @@
+providers:
+- provider: azure
+  azureConfig:
+    tenant: foo
+- provider: oidc
