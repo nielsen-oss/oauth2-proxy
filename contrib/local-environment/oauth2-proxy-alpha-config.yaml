@@ -3,3 +3,5 @@ providers:
   azureConfig:
     tenant: foo
 - provider: oidc
+  oidcConfig:
+    oidcIssuerURL: https://foo/bar.com

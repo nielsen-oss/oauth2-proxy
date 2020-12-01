@@ -9,16 +9,14 @@ type Provider struct {
 	ClientSecret     string `json:"clientSecret"`
 	ClientSecretFile string `json:"clientSecretFile"`
 
-	KeycloakConfig      KeycloakOptions  `json:"keycloakConfig"`
-	AzureConfig         AzureOptions     `json:"azureConfig"`
-	BitbucketConfig     BitbucketOptions `json:"bitbucketConfig"`
-	GitHubConfig        GitHubOptions    `json:"githubConfig"`
-	GitLabConfig        GitLabOptions    `json:"gitlabConfig"`
-	GoogleConfig        GoogleOptions    `json:"googleConfig"`
-	OIDCConfig          OIDCOptions      `json:"oidcConfig"`
-	LoginGovConfig      LoginGovOptions  `json:"loginGovConfig"`
-	SkipJwtBearerTokens bool             `json:"skipJwtBearerTokens"`
-	ExtraJwtIssuers     []string         `json:"extraJwtIssuers"`
+	KeycloakConfig  KeycloakOptions  `json:"keycloakConfig"`
+	AzureConfig     AzureOptions     `json:"azureConfig"`
+	BitbucketConfig BitbucketOptions `json:"bitbucketConfig"`
+	GitHubConfig    GitHubOptions    `json:"githubConfig"`
+	GitLabConfig    GitLabOptions    `json:"gitlabConfig"`
+	GoogleConfig    GoogleOptions    `json:"googleConfig"`
+	OIDCConfig      OIDCOptions      `json:"oidcConfig"`
+	LoginGovConfig  LoginGovOptions  `json:"loginGovConfig"`
 
 	ProviderID      string   `json:"providerID"`
 	ProviderType    string   `json:"provider"`

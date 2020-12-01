@@ -11,6 +11,7 @@ import (
 // ProviderData contains information required to configure all implementations
 // of OAuth2 providers
 type ProviderData struct {
+	ProviderID        string
 	ProviderName      string
 	LoginURL          *url.URL
 	RedeemURL         *url.URL

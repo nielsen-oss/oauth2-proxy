@@ -70,10 +70,10 @@ type OAuthProxy struct {
 	AuthOnlyPath      string
 	UserInfoPath      string
 
-	redirectURL             *url.URL // the url to receive requests at
-	whitelistDomains        []string
-	provider                providers.Provider
-	providerNameOverride    string
+	redirectURL      *url.URL // the url to receive requests at
+	whitelistDomains []string
+	providers        map[string]providers.Provider
+	// providerNameOverride    string
 	sessionStore            sessionsapi.SessionStore
 	ProxyPrefix             string
 	SignInMessage           string
@@ -94,7 +94,7 @@ type OAuthProxy struct {
 	skipAuthPreflight       bool
 	skipAuthStripHeaders    bool
 	skipJwtBearerTokens     bool
-	mainJwtBearerVerifier   *oidc.IDTokenVerifier
+	mainJwtBearerVerifier   map[string]*oidc.IDTokenVerifier
 	extraJwtBearerVerifiers []*oidc.IDTokenVerifier
 	compiledRegex           []*regexp.Regexp
 	templates               *template.Template
@@ -125,7 +125,7 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 	}
 
 	if opts.SkipJwtBearerTokens {
-		logger.Printf("Skipping JWT tokens from configured OIDC issuer: %q", opts.OIDCIssuerURL)
+		logger.Printf("Skipping JWT tokens from configured OIDC issues")
 		for _, issuer := range opts.ExtraJwtIssuers {
 			logger.Printf("Skipping JWT tokens from extra JWT issuer: %q", issuer)
 		}
@@ -135,7 +135,9 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		redirectURL.Path = fmt.Sprintf("%s/callback", opts.ProxyPrefix)
 	}
 
-	logger.Printf("OAuthProxy configured for %s Client ID: %s", opts.GetProvider().Data().ProviderName, opts.ClientID)
+	for _, provider := range opts.GetProviders() {
+		logger.Printf("OAuthProxy configured for %s Client ID: %s", provider.Data().ProviderID, provider.Data().ClientID)
+	}
 	refresh := "disabled"
 	if opts.Cookie.Refresh != time.Duration(0) {
 		refresh = fmt.Sprintf("after %s", opts.Cookie.Refresh)
@@ -185,9 +187,9 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		AuthOnlyPath:      fmt.Sprintf("%s/auth", opts.ProxyPrefix),
 		UserInfoPath:      fmt.Sprintf("%s/userinfo", opts.ProxyPrefix),
 
-		ProxyPrefix:             opts.ProxyPrefix,
-		provider:                opts.GetProvider(),
-		providerNameOverride:    opts.ProviderName,
+		ProxyPrefix: opts.ProxyPrefix,
+		providers:   opts.GetProviders(),
+		// providerNameOverride:    opts.ProviderName,
 		sessionStore:            sessionStore,
 		serveMux:                upstreamProxy,
 		redirectURL:             redirectURL,
@@ -196,7 +198,7 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		skipAuthPreflight:       opts.SkipAuthPreflight,
 		skipAuthStripHeaders:    opts.SkipAuthStripHeaders,
 		skipJwtBearerTokens:     opts.SkipJwtBearerTokens,
-		mainJwtBearerVerifier:   opts.GetOIDCVerifier(),
+		mainJwtBearerVerifier:   opts.GetOIDCVerifiers(),
 		extraJwtBearerVerifiers: opts.GetJWTBearerVerifiers(),
 		compiledRegex:           opts.GetCompiledRegex(),
 		realClientIPParser:      opts.GetRealClientIPParser(),
