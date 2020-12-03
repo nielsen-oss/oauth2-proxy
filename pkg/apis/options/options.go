@@ -129,7 +129,9 @@ func NewOptions() *Options {
 		// UserIDClaim:                      "email",
 		// InsecureOIDCAllowUnverifiedEmail: false,
 		// SkipOIDCDiscovery:                false,
-		Logging: loggingDefaults(),
+		Logging:       loggingDefaults(),
+		providers:     make(map[string]providers.Provider),
+		oidcVerifiers: make(map[string]*oidc.IDTokenVerifier),
 	}
 }
 

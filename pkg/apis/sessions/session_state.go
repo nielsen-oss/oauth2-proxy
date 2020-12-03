@@ -25,6 +25,7 @@ type SessionState struct {
 	Email             string     `json:",omitempty" msgpack:"e,omitempty"`
 	User              string     `json:",omitempty" msgpack:"u,omitempty"`
 	PreferredUsername string     `json:",omitempty" msgpack:"pu,omitempty"`
+	ProviderID        string     `json:",omitempty" msgpack:"pid,omitempty"`
 }
 
 // IsExpired checks whether the session has expired
@@ -51,6 +52,9 @@ func (s *SessionState) String() string {
 	}
 	if s.IDToken != "" {
 		o += " id_token:true"
+	}
+	if s.ProviderID != "" {
+		o += fmt.Sprintf(" ProviderID:%s", s.ProviderID)
 	}
 	if s.CreatedAt != nil && !s.CreatedAt.IsZero() {
 		o += fmt.Sprintf(" created:%s", s.CreatedAt)
@@ -226,6 +230,7 @@ func (s *SessionState) validate() error {
 		s.AccessToken,
 		s.IDToken,
 		s.RefreshToken,
+		s.ProviderID,
 	} {
 		if !utf8.ValidString(field) {
 			return errors.New("invalid non-UTF8 field in session")

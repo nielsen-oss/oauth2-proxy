@@ -21,16 +21,7 @@ import (
 
 func main() {
 	logger.SetFlags(logger.Lshortfile)
-	// flagSet := options.NewFlagSet()
 
-	// config := flagSet.String("config", "", "path to config file")
-	// showVersion := flagSet.Bool("version", false, "print version string")
-
-	// err := flagSet.Parse(os.Args[1:])
-	// if err != nil {
-	// 	logger.Printf("ERROR: Failed to parse flags: %v", err)
-	// 	os.Exit(1)
-	// }
 	configFlagSet := pflag.NewFlagSet("oauth2-proxy", pflag.ContinueOnError)
 	config := configFlagSet.String("config", "", "path to config file")
 	alphaConfig := configFlagSet.String("alpha-config", "", "path to alpha config file (use at your own risk - the structure in this config file may change between minor releases)")
@@ -43,21 +34,10 @@ func main() {
 		return
 	}
 
-	// legacyOpts := options.NewLegacyOptions()
-	// err = options.Load(*config, flagSet, legacyOpts)
-	// if err != nil {
-	// 	logger.Errorf("ERROR: Failed to load config: %v", err)
-	// 	os.Exit(1)
-	// }
 	if *convertConfig && *alphaConfig != "" {
 		logger.Fatal("cannot use alpha-config and conver-config-to-alpha together")
 	}
 
-	// opts, err := legacyOpts.ToOptions()
-	// if err != nil {
-	// 	logger.Errorf("ERROR: Failed to convert config: %v", err)
-	// 	os.Exit(1)
-	// }
 	opts, err := loadConfiguration(*config, *alphaConfig, configFlagSet, os.Args[1:])
 	if err != nil {
 		logger.Errorf("ERROR: Failed to load config: %v", err)

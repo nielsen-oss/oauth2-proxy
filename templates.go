@@ -69,6 +69,7 @@ func getTemplates() *template.Template {
 		border-color: #285e8e;
 		text-decoration: none;
 	}
+
 	label {
 		display: inline-block;
 		max-width: 100%;
@@ -121,7 +122,15 @@ func getTemplates() *template.Template {
 	{{ if .SignInMessage }}
 	<p>{{.SignInMessage}}</p>
 	{{ end}}
-	<button type="submit" class="btn">Sign in with {{.ProviderName}}</button><br/>
+	
+	{{ with .ProviderChoices }}
+		{{ range . }}
+		<br/>
+		<button id="{{ .ProviderName }}" name="chosen_provider" type="submit" value="{{ .ProviderID }}" class="btn">Sign in with <b>{{ .ProviderName }}</b></button><br/>
+		<br/>
+		{{ end }}
+	{{ end }}	
+
 	</form>
 	</div>
 

@@ -79,22 +79,22 @@ func Validate(o *options.Options) error {
 
 		// Ensure provider IDs are unique
 		if _, ok := providerIDs[provider.ProviderID]; ok {
-			msgs = append(msgs, fmt.Sprintf("multiple providers found with id %q: provider ids must be unique", provider.ProviderID))
+			msgs = append(msgs, fmt.Sprintf("multiple providers found with id %s: provider ids must be unique", provider.ProviderID))
 		}
 
 		if provider.ClientID == "" {
-			msgs = append(msgs, "provider %s missing setting: client-id", provider.ProviderID)
+			msgs = append(msgs, fmt.Sprintf("provider %s missing setting: client-id", provider.ProviderID))
 		}
 
 		// login.gov uses a signed JWT to authenticate, not a client-secret
 		if provider.ProviderType != "login.gov" {
 			if provider.ClientSecret == "" && provider.ClientSecretFile == "" {
-				msgs = append(msgs, "provider %s missing setting: client-secret or client-secret-file", provider.ProviderID)
+				msgs = append(msgs, fmt.Sprintf("provider %s missing setting: client-secret or client-secret-file", provider.ProviderID))
 			}
 			if provider.ClientSecret == "" && provider.ClientSecretFile != "" {
 				_, err := ioutil.ReadFile(provider.ClientSecretFile)
 				if err != nil {
-					msgs = append(msgs, "provider %s could not read client secret file: %s", provider.ProviderID, provider.ClientSecretFile)
+					msgs = append(msgs, fmt.Sprintf("provider %s could not read client secret file: %s", provider.ProviderID, provider.ClientSecretFile))
 				}
 			}
 		}
@@ -176,6 +176,9 @@ func Validate(o *options.Options) error {
 			}
 			if provider.Scope == "" {
 				provider.Scope = "openid email profile"
+			}
+			if provider.OIDCConfig.UserIDClaim == "" {
+				provider.OIDCConfig.UserIDClaim = "email"
 			}
 		}
 
@@ -262,14 +265,15 @@ func Validate(o *options.Options) error {
 
 func parseProviderInfo(o *options.Options, po options.Provider, msgs []string) []string {
 	p := &providers.ProviderData{
-		ProviderID:       po.ProviderID,
-		Scope:            po.Scope,
-		ClientID:         po.ClientID,
-		ClientSecret:     po.ClientSecret,
-		ClientSecretFile: po.ClientSecretFile,
-		Prompt:           po.Prompt,
-		ApprovalPrompt:   po.ApprovalPrompt,
-		AcrValues:        po.AcrValues,
+		ProviderID:          po.ProviderID,
+		ProviderDisplayName: po.ProviderName,
+		Scope:               po.Scope,
+		ClientID:            po.ClientID,
+		ClientSecret:        po.ClientSecret,
+		ClientSecretFile:    po.ClientSecretFile,
+		Prompt:              po.Prompt,
+		ApprovalPrompt:      po.ApprovalPrompt,
+		AcrValues:           po.AcrValues,
 	}
 	p.LoginURL, msgs = parseURL(po.LoginURL, "login", msgs)
 	p.RedeemURL, msgs = parseURL(po.RedeemURL, "redeem", msgs)

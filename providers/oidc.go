@@ -246,6 +246,7 @@ func (p *OIDCProvider) findClaimsFromIDToken(ctx context.Context, idToken *oidc.
 		}
 
 		profileURL := p.ProfileURL.String()
+
 		if profileURL == "" || token.AccessToken == "" {
 			return nil, fmt.Errorf("id_token did not contain user ID claim (%q)", p.UserIDClaim)
 		}

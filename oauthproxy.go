@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -103,7 +104,7 @@ type OAuthProxy struct {
 	Banner                  string
 	Footer                  string
 
-	sessionChain alice.Chain
+	sessionChains map[string]alice.Chain
 }
 
 // NewOAuthProxy creates a new instance of OAuthProxy from the options provided
@@ -164,7 +165,7 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		}
 	}
 
-	sessionChain := buildSessionChain(opts, sessionStore, basicAuthValidator)
+	sessionChains := buildSessionChains(opts, sessionStore, basicAuthValidator)
 
 	return &OAuthProxy{
 		CookieName:     opts.Cookie.Name,
@@ -220,43 +221,50 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 
 		basicAuthValidator:  basicAuthValidator,
 		displayHtpasswdForm: basicAuthValidator != nil,
-		sessionChain:        sessionChain,
+		sessionChains:       sessionChains,
 	}, nil
 }
 
-func buildSessionChain(opts *options.Options, sessionStore sessionsapi.SessionStore, validator basic.Validator) alice.Chain {
-	chain := alice.New(middleware.NewScope())
+func buildSessionChains(opts *options.Options, sessionStore sessionsapi.SessionStore, validator basic.Validator) map[string]alice.Chain {
+	chains := make(map[string]alice.Chain)
 
-	if opts.SkipJwtBearerTokens {
-		sessionLoaders := []middlewareapi.TokenToSessionLoader{}
-		if opts.GetOIDCVerifier() != nil {
-			sessionLoaders = append(sessionLoaders, middlewareapi.TokenToSessionLoader{
-				Verifier:       opts.GetOIDCVerifier(),
-				TokenToSession: opts.GetProvider().CreateSessionStateFromBearerToken,
-			})
+	for p := range opts.GetProviders() {
+		chain := alice.New(middleware.NewScope())
+		provider := opts.GetProviders()[p]
+		if opts.SkipJwtBearerTokens {
+			sessionLoaders := []middlewareapi.TokenToSessionLoader{}
+			if opts.GetOIDCVerifiers()[p] != nil {
+				sessionLoaders = append(sessionLoaders, middlewareapi.TokenToSessionLoader{
+					Verifier:       opts.GetOIDCVerifiers()[p],
+					TokenToSession: provider.CreateSessionStateFromBearerToken,
+				})
+			}
+
+			for _, verifier := range opts.GetJWTBearerVerifiers() {
+				sessionLoaders = append(sessionLoaders, middlewareapi.TokenToSessionLoader{
+					Verifier: verifier,
+				})
+			}
+
+			chain = chain.Append(middleware.NewJwtSessionLoader(sessionLoaders))
 		}
 
-		for _, verifier := range opts.GetJWTBearerVerifiers() {
-			sessionLoaders = append(sessionLoaders, middlewareapi.TokenToSessionLoader{
-				Verifier: verifier,
-			})
+		if validator != nil {
+			chain = chain.Append(middleware.NewBasicAuthSessionLoader(validator))
 		}
 
-		chain = chain.Append(middleware.NewJwtSessionLoader(sessionLoaders))
+		chain = chain.Append(middleware.NewStoredSessionLoader(&middleware.StoredSessionLoaderOptions{
+			SessionStore:           sessionStore,
+			RefreshPeriod:          opts.Cookie.Refresh,
+			RefreshSessionIfNeeded: provider.RefreshSessionIfNeeded,
+			ValidateSessionState:   provider.ValidateSessionState,
+		}))
+
+		chains[provider.Data().ProviderID] = chain
+
 	}
 
-	if validator != nil {
-		chain = chain.Append(middleware.NewBasicAuthSessionLoader(validator))
-	}
-
-	chain = chain.Append(middleware.NewStoredSessionLoader(&middleware.StoredSessionLoaderOptions{
-		SessionStore:           sessionStore,
-		RefreshPeriod:          opts.Cookie.Refresh,
-		RefreshSessionIfNeeded: opts.GetProvider().RefreshSessionIfNeeded,
-		ValidateSessionState:   opts.GetProvider().ValidateSessionState,
-	}))
-
-	return chain
+	return chains
 }
 
 func buildSignInMessage(opts *options.Options) string {
@@ -296,29 +304,29 @@ func (p *OAuthProxy) GetRedirectURI(host string) string {
 	return u.String()
 }
 
-func (p *OAuthProxy) redeemCode(ctx context.Context, host, code string) (s *sessionsapi.SessionState, err error) {
+func (p *OAuthProxy) redeemCode(ctx context.Context, host, code string, provider string) (s *sessionsapi.SessionState, err error) {
 	if code == "" {
 		return nil, errors.New("missing code")
 	}
 	redirectURI := p.GetRedirectURI(host)
-	s, err = p.provider.Redeem(ctx, redirectURI, code)
+	s, err = p.providers[provider].Redeem(ctx, redirectURI, code)
 	if err != nil {
 		return
 	}
 
 	if s.Email == "" {
-		s.Email, err = p.provider.GetEmailAddress(ctx, s)
+		s.Email, err = p.providers[provider].GetEmailAddress(ctx, s)
 	}
 
 	if s.PreferredUsername == "" {
-		s.PreferredUsername, err = p.provider.GetPreferredUsername(ctx, s)
+		s.PreferredUsername, err = p.providers[provider].GetPreferredUsername(ctx, s)
 		if err != nil && err.Error() == "not implemented" {
 			err = nil
 		}
 	}
 
 	if s.User == "" {
-		s.User, err = p.provider.GetUserName(ctx, s)
+		s.User, err = p.providers[provider].GetUserName(ctx, s)
 		if err != nil && err.Error() == "not implemented" {
 			err = nil
 		}
@@ -435,28 +443,49 @@ func (p *OAuthProxy) SignInPage(rw http.ResponseWriter, req *http.Request, code 
 		redirectURL = "/"
 	}
 
+	// providerChoice hosts the names of the configured providers to choose from
+	type providerChoice struct {
+		ProviderID   string
+		ProviderName string
+	}
+	var providerChoices []providerChoice
+
+	for providerID := range p.providers {
+		name := p.providers[providerID].Data().ProviderName
+		if p.providers[providerID].Data().ProviderDisplayName != "" {
+			name = p.providers[providerID].Data().ProviderDisplayName
+		}
+		providerChoices = append(providerChoices, providerChoice{
+			ProviderID:   providerID,
+			ProviderName: name,
+		})
+	}
+
+	// sort the buttons to keep order in each load
+	sort.Slice(providerChoices, func(i, j int) bool {
+		return providerChoices[i].ProviderName < providerChoices[j].ProviderName
+	})
+
 	// We allow unescaped template.HTML since it is user configured options
 	/* #nosec G203 */
 	t := struct {
-		ProviderName  string
-		SignInMessage template.HTML
-		CustomLogin   bool
-		Redirect      string
-		Version       string
-		ProxyPrefix   string
-		Footer        template.HTML
+		ProviderChoices []providerChoice
+		SignInMessage   template.HTML
+		CustomLogin     bool
+		Redirect        string
+		Version         string
+		ProxyPrefix     string
+		Footer          template.HTML
 	}{
-		ProviderName:  p.provider.Data().ProviderName,
-		SignInMessage: template.HTML(p.SignInMessage),
-		CustomLogin:   p.displayHtpasswdForm,
-		Redirect:      redirectURL,
-		Version:       VERSION,
-		ProxyPrefix:   p.ProxyPrefix,
-		Footer:        template.HTML(p.Footer),
+		ProviderChoices: providerChoices,
+		SignInMessage:   template.HTML(p.SignInMessage),
+		CustomLogin:     p.displayHtpasswdForm,
+		Redirect:        redirectURL,
+		Version:         VERSION,
+		ProxyPrefix:     p.ProxyPrefix,
+		Footer:          template.HTML(p.Footer),
 	}
-	if p.providerNameOverride != "" {
-		t.ProviderName = p.providerNameOverride
-	}
+
 	err = p.templates.ExecuteTemplate(rw, "sign_in.html", t)
 	if err != nil {
 		logger.Printf("Error rendering sign_in.html template: %v", err)
@@ -676,6 +705,7 @@ func (p *OAuthProxy) SignIn(rw http.ResponseWriter, req *http.Request) {
 
 	user, ok := p.ManualSignIn(req)
 	if ok {
+		// TODO (yanasega): verify manual sign in is not causeing issues with multiple providers
 		session := &sessionsapi.SessionState{User: user}
 		err = p.SaveSession(rw, req, session)
 		if err != nil {
@@ -695,7 +725,6 @@ func (p *OAuthProxy) SignIn(rw http.ResponseWriter, req *http.Request) {
 
 //UserInfo endpoint outputs session email and preferred username in JSON format
 func (p *OAuthProxy) UserInfo(rw http.ResponseWriter, req *http.Request) {
-
 	session, err := p.getAuthenticatedSession(rw, req)
 	if err != nil {
 		http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -743,6 +772,19 @@ func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
 		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", err.Error())
 		return
 	}
+
+	provider, err := p.getChosenProvider(req)
+	if err != nil {
+		logger.Errorf("Error obtaining provider: %v", err)
+		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", err.Error())
+		return
+	}
+
+	if provider == "" {
+		p.SignIn(rw, req)
+		return
+	}
+
 	p.SetCSRFCookie(rw, req, nonce)
 	redirect, err := p.GetRedirect(req)
 	if err != nil {
@@ -751,7 +793,8 @@ func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	redirectURI := p.GetRedirectURI(util.GetRequestHost(req))
-	http.Redirect(rw, req, p.provider.GetLoginURL(redirectURI, fmt.Sprintf("%v:%v", nonce, redirect)), http.StatusFound)
+	// provider must be passed before redirect beacuse redirect may contain ':' that is not a separator
+	http.Redirect(rw, req, p.providers[provider].GetLoginURL(redirectURI, fmt.Sprintf("%v:%v:%v", nonce, provider, redirect)), http.StatusFound)
 }
 
 // OAuthCallback is the OAuth2 authentication flow callback that finishes the
@@ -773,21 +816,24 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	session, err := p.redeemCode(req.Context(), util.GetRequestHost(req), req.Form.Get("code"))
+	s := strings.SplitN(req.Form.Get("state"), ":", 3)
+	if len(s) != 3 {
+		logger.Error("Error while parsing OAuth2 state: invalid length")
+		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", "Invalid State")
+		return
+	}
+	nonce := s[0]
+	provider := s[1]
+	redirect := s[2]
+
+	logger.Printf("provider that was found in callback: %s", provider)
+	session, err := p.redeemCode(req.Context(), util.GetRequestHost(req), req.Form.Get("code"), provider)
 	if err != nil {
 		logger.Errorf("Error redeeming code during OAuth2 callback: %v", err)
 		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", "Internal Error")
 		return
 	}
 
-	s := strings.SplitN(req.Form.Get("state"), ":", 2)
-	if len(s) != 2 {
-		logger.Error("Error while parsing OAuth2 state: invalid length")
-		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", "Invalid State")
-		return
-	}
-	nonce := s[0]
-	redirect := s[1]
 	c, err := req.Cookie(p.CSRFCookieName)
 	if err != nil {
 		logger.PrintAuthf(session.Email, req, logger.AuthFailure, "Invalid authentication via OAuth2: unable to obtain CSRF cookie")
@@ -806,7 +852,8 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// set cookie, or deny
-	if p.Validator(session.Email) && p.provider.ValidateGroup(session.Email) {
+	if p.Validator(session.Email) && p.providers[provider].ValidateGroup(session.Email) {
+		session.ProviderID = provider
 		logger.PrintAuthf(session.Email, req, logger.AuthSuccess, "Authenticated via OAuth2: %s", session)
 		err := p.SaveSession(rw, req, session)
 		if err != nil {
@@ -881,7 +928,14 @@ func (p *OAuthProxy) Proxy(rw http.ResponseWriter, req *http.Request) {
 func (p *OAuthProxy) getAuthenticatedSession(rw http.ResponseWriter, req *http.Request) (*sessionsapi.SessionState, error) {
 	var session *sessionsapi.SessionState
 
-	getSession := p.sessionChain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	preSession, err := p.LoadCookiedSession(req)
+	if err != nil {
+		logger.Printf("Could not extract provider from session: %v", err)
+		return nil, ErrNeedsLogin
+	}
+	provider := preSession.ProviderID
+
+	getSession := p.sessionChains[provider].Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		session = middleware.GetRequestScope(req).Session
 	}))
 	getSession.ServeHTTP(rw, req)
@@ -901,6 +955,23 @@ func (p *OAuthProxy) getAuthenticatedSession(rw http.ResponseWriter, req *http.R
 	}
 
 	return session, nil
+}
+
+func (p *OAuthProxy) getChosenProvider(req *http.Request) (chosenProvider string, err error) {
+	if p.SkipProviderButton {
+		// Assuming there is only one provider
+		for k := range p.providers {
+			chosenProvider = p.providers[k].Data().ProviderID
+			return
+		}
+	}
+	err = req.ParseForm()
+	if err != nil {
+		return
+	}
+
+	chosenProvider = req.Form.Get("chosen_provider")
+	return
 }
 
 // addHeadersForProxying adds the appropriate headers the request / response for proxying
