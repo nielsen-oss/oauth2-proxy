@@ -76,9 +76,9 @@ type OIDCOptions struct {
 	InsecureOIDCSkipIssuerVerification bool   `json:"insecureOidcSkipIssuerVerification,omitempty"`
 	SkipOIDCDiscovery                  bool   `json:"skipOidcDiscovery,omitempty"`
 	OIDCJwksURL                        string `json:"oidcJwksURL,omitempty"`
-	OIDCGroupsClaim                    string `json:"oidcGroupsClaim,omitempty,omitempty"`
-	OIDCEmailClaim                     string `json:"oidcEmailClaim,omitempty,omitempty"`
-	UserIDClaim                        string `json:"userIDClaim,omitempty,omitempty"`
+	OIDCGroupsClaim                    string `json:"oidcGroupsClaim,omitempty"`
+	OIDCEmailClaim                     string `json:"oidcEmailClaim,omitempty"`
+	UserIDClaim                        string `json:"userIDClaim,omitempty"`
 }
 
 type LoginGovOptions struct {
