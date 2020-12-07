@@ -14,6 +14,56 @@ import (
 )
 
 var _ = Describe("Load", func() {
+	optionsWithNilProvider := &Options{
+		ProxyPrefix:         "/oauth2",
+		PingPath:            "/ping",
+		HTTPAddress:         "127.0.0.1:4180",
+		HTTPSAddress:        ":443",
+		RealClientIPHeader:  "X-Real-IP",
+		ForceHTTPS:          false,
+		DisplayHtpasswdForm: true,
+		Cookie:              cookieDefaults(),
+		Session:             sessionOptionsDefaults(),
+		SkipAuthPreflight:   false,
+		Logging:             loggingDefaults(),
+	}
+
+	legacyOptionsWithNilProvider := &LegacyOptions{
+		LegacyUpstreams: LegacyUpstreams{
+			PassHostHeader:  true,
+			ProxyWebSockets: true,
+			FlushInterval:   DefaultUpstreamFlushInterval,
+		},
+
+		LegacyHeaders: LegacyHeaders{
+			PassBasicAuth:        true,
+			PassUserHeaders:      true,
+			SkipAuthStripHeaders: true,
+		},
+
+		LegacyProvider: LegacyProvider{
+			ProviderType:    "google",
+			AzureTenant:     "common",
+			ApprovalPrompt:  "force",
+			UserIDClaim:     "email",
+			OIDCGroupsClaim: "groups",
+		},
+
+		Options: Options{
+			ProxyPrefix:         "/oauth2",
+			PingPath:            "/ping",
+			HTTPAddress:         "127.0.0.1:4180",
+			HTTPSAddress:        ":443",
+			RealClientIPHeader:  "X-Real-IP",
+			ForceHTTPS:          false,
+			DisplayHtpasswdForm: true,
+			Cookie:              cookieDefaults(),
+			Session:             sessionOptionsDefaults(),
+			SkipAuthPreflight:   false,
+			Logging:             loggingDefaults(),
+		},
+	}
+
 	Context("with a testOptions structure", func() {
 		type TestOptionSubStruct struct {
 			StringSliceOption []string `flag:"string-slice-option" cfg:"string_slice_option"`
@@ -291,15 +341,18 @@ var _ = Describe("Load", func() {
 					},
 				},
 			}),
+			// TODO (yanasega): temporary solution: optionsWithNilProvider and legacyOptionsWithNilProvider are set because Providers is internal
+			// therefore it's loaded as nil but it has some default fields that are being set in NewOptions
+			// as appose to Upstreams/Headers alpha options
 			Entry("with an empty Options struct, should return default values", &testOptionsTableInput{
 				flagSet:        NewFlagSet,
 				input:          &Options{},
-				expectedOutput: NewOptions(),
+				expectedOutput: optionsWithNilProvider,
 			}),
 			Entry("with an empty LegacyOptions struct, should return default values", &testOptionsTableInput{
 				flagSet:        NewLegacyFlagSet,
 				input:          &LegacyOptions{},
-				expectedOutput: NewLegacyOptions(),
+				expectedOutput: legacyOptionsWithNilProvider,
 			}),
 		)
 	})
