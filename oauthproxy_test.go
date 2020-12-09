@@ -37,6 +37,7 @@ const (
 	base64CookieSecret = "c2VjcmV0dGhpcnR5dHdvYnl0ZXMrYWJjZGVmZ2hpams"
 	clientID           = "3984n253984d7348dm8234yf982t"
 	clientSecret       = "gv3498mfc9t23y23974dm2394dm9"
+	providerID         = "providerID"
 )
 
 func init() {
@@ -371,6 +372,9 @@ var _ providers.Provider = (*TestProvider)(nil)
 func NewTestProvider(providerURL *url.URL, emailAddress string) *TestProvider {
 	return &TestProvider{
 		ProviderData: &providers.ProviderData{
+			ProviderID:   providerID,
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
 			ProviderName: "Test Provider",
 			LoginURL: &url.URL{
 				Scheme: "http",
@@ -444,7 +448,7 @@ func TestBasicAuthPassword(t *testing.T) {
 	providerURL, _ := url.Parse(providerServer.URL)
 	const emailAddress = "john.doe@example.com"
 
-	opts.SetProvider(NewTestProvider(providerURL, emailAddress))
+	opts.SetProvider(providerID, NewTestProvider(providerURL, emailAddress))
 	proxy, err := NewOAuthProxy(opts, func(email string) bool {
 		return email == emailAddress
 	})
@@ -453,7 +457,7 @@ func TestBasicAuthPassword(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/oauth2/callback?code=callback_code&state=nonce:", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", "/oauth2/callback?code=callback_code&state=nonce:providerID:", strings.NewReader(""))
 	req.AddCookie(proxy.MakeCSRFCookie(req, "nonce", proxy.CookieExpire, time.Now()))
 	proxy.ServeHTTP(rw, req)
 	if rw.Code >= 400 {
@@ -783,7 +787,7 @@ func NewPassAccessTokenTest(opts PassAccessTokenTestOptions) (*PassAccessTokenTe
 	providerURL, _ := url.Parse(patt.providerServer.URL)
 	const emailAddress = "michael.bland@gsa.gov"
 
-	patt.opts.SetProvider(NewTestProvider(providerURL, emailAddress))
+	patt.opts.SetProvider(providerID, NewTestProvider(providerURL, emailAddress))
 	patt.proxy, err = NewOAuthProxy(patt.opts, func(email string) bool {
 		return email == emailAddress
 	})
@@ -800,7 +804,7 @@ func (patTest *PassAccessTokenTest) Close() {
 func (patTest *PassAccessTokenTest) getCallbackEndpoint() (httpCode int,
 	cookie string) {
 	rw := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/oauth2/callback?code=callback_code&state=nonce:",
+	req, err := http.NewRequest("GET", "/oauth2/callback?code=callback_code&state=nonce:providerID:",
 		strings.NewReader(""))
 	if err != nil {
 		return 0, ""
@@ -1076,9 +1080,18 @@ func NewProcessCookieTest(opts ProcessCookieTestOpts, modifiers ...OptionsModifi
 	if err != nil {
 		return nil, err
 	}
-	pcTest.proxy.provider = &TestProvider{
+
+	testProvidersMap := make(map[string]providers.Provider)
+	testProvidersMap[providerID] = &TestProvider{
+		ProviderData: &providers.ProviderData{
+			ProviderID:          providerID,
+			ProviderDisplayName: providerID,
+			ClientID:            clientID,
+			ClientSecret:        clientSecret,
+		},
 		ValidToken: opts.providerValidateCookieResponse,
 	}
+	pcTest.proxy.providers = testProvidersMap
 
 	// Now, zero-out proxy.CookieRefresh for the cases that don't involve
 	// access_token validation.
@@ -1229,7 +1242,7 @@ func TestUserInfoEndpointAccepted(t *testing.T) {
 	}
 
 	startSession := &sessions.SessionState{
-		Email: "john.doe@example.com", AccessToken: "my_access_token"}
+		Email: "john.doe@example.com", AccessToken: "my_access_token", ProviderID: providerID}
 	err = test.SaveSession(startSession)
 	assert.NoError(t, err)
 
@@ -1267,7 +1280,7 @@ func TestAuthOnlyEndpointAccepted(t *testing.T) {
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
-		Email: "michael.bland@gsa.gov", AccessToken: "my_access_token", CreatedAt: &created}
+		Email: "michael.bland@gsa.gov", AccessToken: "my_access_token", CreatedAt: &created, ProviderID: providerID}
 	err = test.SaveSession(startSession)
 	assert.NoError(t, err)
 
@@ -1317,7 +1330,7 @@ func TestAuthOnlyEndpointUnauthorizedOnEmailValidationFailure(t *testing.T) {
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
-		Email: "michael.bland@gsa.gov", AccessToken: "my_access_token", CreatedAt: &created}
+		Email: "michael.bland@gsa.gov", AccessToken: "my_access_token", CreatedAt: &created, ProviderID: providerID}
 	err = test.SaveSession(startSession)
 	assert.NoError(t, err)
 	test.validateUser = false
@@ -1342,9 +1355,18 @@ func TestAuthOnlyEndpointSetXAuthRequestHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pcTest.proxy.provider = &TestProvider{
+
+	testProvidersMap := make(map[string]providers.Provider)
+	testProvidersMap[providerID] = &TestProvider{
+		ProviderData: &providers.ProviderData{
+			ProviderID:          providerID,
+			ProviderDisplayName: providerID,
+			ClientID:            clientID,
+			ClientSecret:        clientSecret,
+		},
 		ValidToken: true,
 	}
+	pcTest.proxy.providers = testProvidersMap
 
 	pcTest.validateUser = true
 
@@ -1354,7 +1376,7 @@ func TestAuthOnlyEndpointSetXAuthRequestHeaders(t *testing.T) {
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
-		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created}
+		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created, ProviderID: providerID}
 	err = pcTest.SaveSession(startSession)
 	assert.NoError(t, err)
 
@@ -1379,9 +1401,21 @@ func TestAuthOnlyEndpointSetBasicAuthTrueRequestHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pcTest.proxy.provider = &TestProvider{
+
+	testProvidersMap := make(map[string]providers.Provider)
+	testProvidersMap[providerID] = &TestProvider{
+		ProviderData: &providers.ProviderData{
+			ProviderID:          providerID,
+			ProviderDisplayName: providerID,
+			ClientID:            clientID,
+			ClientSecret:        clientSecret,
+		},
 		ValidToken: true,
 	}
+	pcTest.proxy.providers = testProvidersMap
+	// pcTest.proxy.provider = &TestProvider{
+	// 	ValidToken: true,
+	// }
 
 	pcTest.validateUser = true
 
@@ -1391,7 +1425,7 @@ func TestAuthOnlyEndpointSetBasicAuthTrueRequestHeaders(t *testing.T) {
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
-		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created}
+		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created, ProviderID: providerID}
 	err = pcTest.SaveSession(startSession)
 	assert.NoError(t, err)
 
@@ -1418,9 +1452,18 @@ func TestAuthOnlyEndpointSetBasicAuthFalseRequestHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pcTest.proxy.provider = &TestProvider{
+
+	testProvidersMap := make(map[string]providers.Provider)
+	testProvidersMap[providerID] = &TestProvider{
+		ProviderData: &providers.ProviderData{
+			ProviderID:          providerID,
+			ProviderDisplayName: providerID,
+			ClientID:            clientID,
+			ClientSecret:        clientSecret,
+		},
 		ValidToken: true,
 	}
+	pcTest.proxy.providers = testProvidersMap
 
 	pcTest.validateUser = true
 
@@ -1430,7 +1473,7 @@ func TestAuthOnlyEndpointSetBasicAuthFalseRequestHeaders(t *testing.T) {
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
-		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created}
+		User: "oauth_user", Email: "oauth_user@example.com", AccessToken: "oauth_token", CreatedAt: &created, ProviderID: providerID}
 	err = pcTest.SaveSession(startSession)
 	assert.NoError(t, err)
 
@@ -1464,7 +1507,7 @@ func TestAuthSkippedForPreflightRequests(t *testing.T) {
 	assert.NoError(t, err)
 
 	upstreamURL, _ := url.Parse(upstream.URL)
-	opts.SetProvider(NewTestProvider(upstreamURL, ""))
+	opts.SetProvider("Test Provider ID", NewTestProvider(upstreamURL, ""))
 
 	proxy, err := NewOAuthProxy(opts, func(string) bool { return false })
 	if err != nil {
@@ -1546,7 +1589,7 @@ func NewSignatureTest() (*SignatureTest, error) {
 	if err != nil {
 		return nil, err
 	}
-	opts.SetProvider(NewTestProvider(providerURL, "mbland@acm.org"))
+	opts.SetProvider(providerID, NewTestProvider(providerURL, "mbland@acm.org"))
 
 	return &SignatureTest{
 		opts,
@@ -1598,7 +1641,7 @@ func (st *SignatureTest) MakeRequestWithExpectedKey(method, body, key string) er
 	req.Header = st.header
 
 	state := &sessions.SessionState{
-		Email: "mbland@acm.org", AccessToken: "my_access_token"}
+		Email: "mbland@acm.org", AccessToken: "my_access_token", ProviderID: providerID}
 	err = proxy.SaveSession(st.rw, req, state)
 	if err != nil {
 		return err
@@ -1882,7 +1925,7 @@ func TestGetJwtSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tp, _ := test.proxy.provider.(*TestProvider)
+	tp, _ := test.proxy.providers[providerID].(*TestProvider)
 	tp.GroupValidator = func(s string) bool {
 		return true
 	}
@@ -1894,6 +1937,9 @@ func TestGetJwtSession(t *testing.T) {
 
 	// Bearer
 	expires := time.Unix(1912151821, 0)
+	startSession := &sessions.SessionState{ProviderID: providerID}
+	err = test.SaveSession(startSession)
+	assert.NoError(t, err)
 	session, err := test.proxy.getAuthenticatedSession(test.rw, test.req)
 	assert.NoError(t, err)
 	assert.Equal(t, session.User, "1234567890")
@@ -2025,9 +2071,12 @@ func Test_noCacheHeaders(t *testing.T) {
 func baseTestOptions() *options.Options {
 	opts := options.NewOptions()
 	opts.Cookie.Secret = rawCookieSecret
-	opts.ClientID = clientID
-	opts.ClientSecret = clientSecret
 	opts.EmailDomains = []string{"*"}
+
+	opts.Providers[0].ProviderID = providerID
+	opts.Providers[0].ClientID = clientID
+	opts.Providers[0].ClientSecret = clientSecret
+
 	return opts
 }
 

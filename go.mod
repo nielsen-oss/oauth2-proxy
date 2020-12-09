@@ -16,8 +16,9 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/mbland/hmacauth v0.0.0-20170912233209-44256dfd4bfa
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/oauth2-proxy/oauth2-proxy/v7 v7.0.0-20201130193843-d58703001944 // indirect
-	github.com/onsi/ginkgo v1.14.1
+	github.com/nxadm/tail v1.4.5 // indirect
+	github.com/oauth2-proxy/oauth2-proxy/v7 v7.0.0-20201130193843-d58703001944
+	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.2
 	github.com/pierrec/lz4 v2.5.2+incompatible
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
@@ -29,6 +30,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/sys v0.0.0-20201202213521-69691e467435 // indirect
 	google.golang.org/api v0.20.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1

@@ -64,10 +64,70 @@ func getTemplates() *template.Template {
 		cursor: pointer;
 	}
 
-	.btn:hover {
-		background-color: #3071a9;
-		border-color: #285e8e;
-		text-decoration: none;
+	// .btn:hover {
+	// 	background-color: #3071a9;
+	// 	border-color: #285e8e;
+	// 	text-decoration: none;
+	// }
+
+	.btn.Azure{
+		background-color: #FA8072;
+		border: 1px solid #f76f60;
+	}
+
+	.btn.OpenID.Connect{
+		background-color: #428bca;
+		border: 1px solid #357ebd;
+	}
+
+	.btn.Bitbucket{
+		background-color: #1E90FF;
+		border: 1px solid #357ebd;
+	}
+
+	.btn.DigitalOcean{
+		background-color: #00BFFF;
+		border: 1px solid #357ebd;
+	}
+
+	.btn.Facebook{
+		background-color: #4169E1;
+		border: 1px solid #357ebd;
+	}
+
+	.btn.GitHub{
+		background-color: #9932CC;
+		border: 1px solid #8B008B;
+	}
+
+	.btn.GitLab{
+		background-color: #FF7F50;
+		border: 1px solid #D2691E;
+	}
+
+	.btn.Google{
+		background-color: #F08080;
+		border: 1px solid #FFB6C1;
+	}
+
+	.btn.Keycloak{
+		background-color: #778899;
+		border: 1px solid #778899;
+	}
+
+	.btn.LinkedIn{
+		background-color: #7B68EE;
+		border: 1px solid #7B68EE;
+	}
+
+	.btn.login.gov{
+		background-color: #800000;
+		border: 1px solid #800000;
+	}
+
+	.btn.Nextcloud{
+		background-color: #87CEEB;
+		border: 1px solid #357ebd;
 	}
 
 	label {
@@ -126,7 +186,7 @@ func getTemplates() *template.Template {
 	{{ with .ProviderChoices }}
 		{{ range . }}
 		<br/>
-		<button id="{{ .ProviderName }}" name="chosen_provider" type="submit" value="{{ .ProviderID }}" class="btn">Sign in with <b>{{ .ProviderName }}</b></button><br/>
+		<button id="{{ .ProviderName }}" name="chosen_provider" type="submit" value="{{ .ProviderID }}" class="btn {{.ProviderType}}">Sign in with <b>{{ .ProviderName }}</b></button><br/>
 		<br/>
 		{{ end }}
 	{{ end }}	

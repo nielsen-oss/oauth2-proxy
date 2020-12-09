@@ -27,8 +27,13 @@ func NewLegacyOptions() *LegacyOptions {
 			ProxyWebSockets: true,
 			FlushInterval:   time.Duration(1) * time.Second,
 		},
-		LegacyProvider: LegacyProvider{},
-		Options:        *NewOptions(),
+		// LegacyProvider: LegacyProvider{
+		// 	ProviderType:   "google",
+		// 	AzureTenant:    "common",
+		// 	ApprovalPrompt: "force",
+		// 	UserIDClaim:    "email",
+		// },
+		Options: *NewOptions(),
 	}
 }
 
@@ -248,6 +253,21 @@ func (l *LegacyProvider) convert() (Providers, error) {
 		AcrValues:         l.AcrValues,
 	}
 
+	// This part is out of the switch section for all providers that support OIDC
+	provider.OIDCConfig = OIDCOptions{
+		OIDCIssuerURL:                      l.OIDCIssuerURL,
+		InsecureOIDCAllowUnverifiedEmail:   l.InsecureOIDCAllowUnverifiedEmail,
+		InsecureOIDCSkipIssuerVerification: l.InsecureOIDCSkipIssuerVerification,
+		SkipOIDCDiscovery:                  l.SkipOIDCDiscovery,
+		OIDCJwksURL:                        l.OIDCJwksURL,
+		UserIDClaim:                        l.UserIDClaim,
+	}
+
+	// This part is out of the switch section because azure has a default tenant
+	// that needs to be added from legacy options
+	provider.AzureConfig = AzureOptions{
+		AzureTenant: l.AzureTenant,
+	}
 	switch provider.ProviderType {
 	case "github":
 		provider.GitHubConfig = GitHubOptions{
@@ -261,10 +281,10 @@ func (l *LegacyProvider) convert() (Providers, error) {
 		provider.KeycloakConfig = KeycloakOptions{
 			KeycloakGroup: l.KeycloakGroup,
 		}
-	case "azure":
-		provider.AzureConfig = AzureOptions{
-			AzureTenant: l.AzureTenant,
-		}
+	// case "azure":
+	// 	provider.AzureConfig = AzureOptions{
+	// 		AzureTenant: l.AzureTenant,
+	// 	}
 	case "gitlab":
 		provider.GitLabConfig = GitLabOptions{
 			GitLabGroup: l.GitLabGroup,
@@ -277,15 +297,15 @@ func (l *LegacyProvider) convert() (Providers, error) {
 			OIDCJwksURL:                        l.OIDCJwksURL,
 			UserIDClaim:                        l.UserIDClaim,
 		}
-	case "oidc":
-		provider.OIDCConfig = OIDCOptions{
-			OIDCIssuerURL:                      l.OIDCIssuerURL,
-			InsecureOIDCAllowUnverifiedEmail:   l.InsecureOIDCAllowUnverifiedEmail,
-			InsecureOIDCSkipIssuerVerification: l.InsecureOIDCSkipIssuerVerification,
-			SkipOIDCDiscovery:                  l.SkipOIDCDiscovery,
-			OIDCJwksURL:                        l.OIDCJwksURL,
-			UserIDClaim:                        l.UserIDClaim,
-		}
+	// case "oidc":
+	// 	provider.OIDCConfig = OIDCOptions{
+	// 		OIDCIssuerURL:                      l.OIDCIssuerURL,
+	// 		InsecureOIDCAllowUnverifiedEmail:   l.InsecureOIDCAllowUnverifiedEmail,
+	// 		InsecureOIDCSkipIssuerVerification: l.InsecureOIDCSkipIssuerVerification,
+	// 		SkipOIDCDiscovery:                  l.SkipOIDCDiscovery,
+	// 		OIDCJwksURL:                        l.OIDCJwksURL,
+	// 		UserIDClaim:                        l.UserIDClaim,
+	// 	}
 	case "login.gov":
 		provider.LoginGovConfig = LoginGovOptions{
 			JWTKey:     l.JWTKey,

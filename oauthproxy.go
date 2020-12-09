@@ -447,6 +447,7 @@ func (p *OAuthProxy) SignInPage(rw http.ResponseWriter, req *http.Request, code 
 	type providerChoice struct {
 		ProviderID   string
 		ProviderName string
+		ProviderType string
 	}
 	var providerChoices []providerChoice
 
@@ -458,6 +459,7 @@ func (p *OAuthProxy) SignInPage(rw http.ResponseWriter, req *http.Request, code 
 		providerChoices = append(providerChoices, providerChoice{
 			ProviderID:   providerID,
 			ProviderName: name,
+			ProviderType: p.providers[providerID].Data().ProviderName,
 		})
 	}
 

@@ -1,9 +1,11 @@
 package options
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -56,6 +58,53 @@ var _ = Describe("Load", func() {
 			expectedErr    error
 			input          interface{}
 			expectedOutput interface{}
+		}
+
+		optionsWithNilProvider := &Options{
+			ProxyPrefix:         "/oauth2",
+			PingPath:            "/ping",
+			HTTPAddress:         "127.0.0.1:4180",
+			HTTPSAddress:        ":443",
+			RealClientIPHeader:  "X-Real-IP",
+			ForceHTTPS:          false,
+			DisplayHtpasswdForm: true,
+			Cookie:              cookieDefaults(),
+			Session:             sessionOptionsDefaults(),
+			SkipAuthPreflight:   false,
+			PassBasicAuth:       true,
+			PassUserHeaders:     true,
+			Logging:             loggingDefaults(),
+		}
+
+		legacyOptionsWithNilProvider := &LegacyOptions{
+			LegacyUpstreams: LegacyUpstreams{
+				PassHostHeader:  true,
+				ProxyWebSockets: true,
+				FlushInterval:   time.Duration(1) * time.Second,
+			},
+
+			LegacyProvider: LegacyProvider{
+				ProviderType:   "google",
+				AzureTenant:    "common",
+				ApprovalPrompt: "force",
+				UserIDClaim:    "email",
+			},
+
+			Options: Options{
+				ProxyPrefix:         "/oauth2",
+				PingPath:            "/ping",
+				HTTPAddress:         "127.0.0.1:4180",
+				HTTPSAddress:        ":443",
+				RealClientIPHeader:  "X-Real-IP",
+				ForceHTTPS:          false,
+				DisplayHtpasswdForm: true,
+				Cookie:              cookieDefaults(),
+				Session:             sessionOptionsDefaults(),
+				SkipAuthPreflight:   false,
+				PassBasicAuth:       true,
+				PassUserHeaders:     true,
+				Logging:             loggingDefaults(),
+			},
 		}
 
 		BeforeEach(func() {
@@ -292,13 +341,184 @@ var _ = Describe("Load", func() {
 			Entry("with an empty Options struct, should return default values", &testOptionsTableInput{
 				flagSet:        NewFlagSet,
 				input:          &Options{},
-				expectedOutput: NewOptions(),
+				expectedOutput: optionsWithNilProvider,
 			}),
 			Entry("with an empty LegacyOptions struct, should return default values", &testOptionsTableInput{
-				flagSet:        NewFlagSet,
+				flagSet:        NewLegacyFlagSet,
 				input:          &LegacyOptions{},
-				expectedOutput: NewLegacyOptions(),
+				expectedOutput: legacyOptionsWithNilProvider,
 			}),
 		)
+	})
+})
+
+var _ = Describe("LoadYAML", func() {
+	Context("with a testOptions structure", func() {
+		type TestOptionSubStruct struct {
+			StringSliceOption []string `yaml:"stringSliceOption,omitempty"`
+		}
+
+		type TestOptions struct {
+			StringOption string              `yaml:"stringOption,omitempty"`
+			Sub          TestOptionSubStruct `yaml:"sub,omitempty"`
+
+			// Check that embedded fields can be unmarshalled
+			TestOptionSubStruct `yaml:",inline,squash"`
+		}
+
+		var testOptionsConfigBytesFull = []byte(`
+stringOption: foo
+stringSliceOption:
+- a
+- b
+- c
+sub:
+  stringSliceOption:
+  - d
+  - e
+`)
+
+		type loadYAMLTableInput struct {
+			configFile     []byte
+			input          interface{}
+			expectedErr    error
+			expectedOutput interface{}
+		}
+
+		DescribeTable("LoadYAML",
+			func(in loadYAMLTableInput) {
+				var configFileName string
+
+				if in.configFile != nil {
+					By("Creating a config file")
+					configFile, err := ioutil.TempFile("", "oauth2-proxy-test-config-file")
+					Expect(err).ToNot(HaveOccurred())
+					defer configFile.Close()
+
+					_, err = configFile.Write(in.configFile)
+					Expect(err).ToNot(HaveOccurred())
+					defer os.Remove(configFile.Name())
+
+					configFileName = configFile.Name()
+				}
+
+				var input interface{}
+				if in.input != nil {
+					input = in.input
+				} else {
+					input = &TestOptions{}
+				}
+				err := LoadYAML(configFileName, input)
+				if in.expectedErr != nil {
+					Expect(err).To(MatchError(in.expectedErr.Error()))
+				} else {
+					Expect(err).ToNot(HaveOccurred())
+				}
+				Expect(input).To(Equal(in.expectedOutput))
+			},
+			Entry("with a valid input", loadYAMLTableInput{
+				configFile: testOptionsConfigBytesFull,
+				input:      &TestOptions{},
+				expectedOutput: &TestOptions{
+					StringOption: "foo",
+					Sub: TestOptionSubStruct{
+						StringSliceOption: []string{"d", "e"},
+					},
+					TestOptionSubStruct: TestOptionSubStruct{
+						StringSliceOption: []string{"a", "b", "c"},
+					},
+				},
+			}),
+			Entry("with no config file", loadYAMLTableInput{
+				configFile:     nil,
+				input:          &TestOptions{},
+				expectedOutput: &TestOptions{},
+				expectedErr:    errors.New("no configuration file provided"),
+			}),
+			Entry("with invalid YAML", loadYAMLTableInput{
+				configFile:     []byte("\tfoo: bar"),
+				input:          &TestOptions{},
+				expectedOutput: &TestOptions{},
+				expectedErr:    errors.New("error unmarshalling config: error converting YAML to JSON: yaml: found character that cannot start any token"),
+			}),
+			Entry("with extra fields in the YAML", loadYAMLTableInput{
+				configFile: append(testOptionsConfigBytesFull, []byte("foo: bar\n")...),
+				input:      &TestOptions{},
+				expectedOutput: &TestOptions{
+					StringOption: "foo",
+					Sub: TestOptionSubStruct{
+						StringSliceOption: []string{"d", "e"},
+					},
+					TestOptionSubStruct: TestOptionSubStruct{
+						StringSliceOption: []string{"a", "b", "c"},
+					},
+				},
+				expectedErr: errors.New("error unmarshalling config: error unmarshaling JSON: while decoding JSON: json: unknown field \"foo\""),
+			}),
+			Entry("with an incorrect type for a string field", loadYAMLTableInput{
+				configFile:     []byte(`stringOption: ["a", "b"]`),
+				input:          &TestOptions{},
+				expectedOutput: &TestOptions{},
+				expectedErr:    errors.New("error unmarshalling config: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal array into Go struct field TestOptions.StringOption of type string"),
+			}),
+			Entry("with an incorrect type for an array field", loadYAMLTableInput{
+				configFile:     []byte(`stringSliceOption: "a"`),
+				input:          &TestOptions{},
+				expectedOutput: &TestOptions{},
+				expectedErr:    errors.New("error unmarshalling config: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field TestOptions.StringSliceOption of type []string"),
+			}),
+		)
+	})
+
+	It("should load a full example AlphaOptions", func() {
+		config := []byte(`
+providers:
+- provider: oidc
+  providerID: dex
+  providerDisplayName: dex_display_name
+  clientID: oauth2-proxy
+  clientSecret: b2F1dGgyLXByb3h5LWNsaWVudC1zZWNyZXQK
+  approvalPrompt: force
+  azureConfig:
+    azureTenant: common
+  oidcConfig:
+    userIDClaim: email
+    oidcIssuerURL: http://dex.localhost:4190/dex
+`)
+
+		By("Creating a config file")
+		configFile, err := ioutil.TempFile("", "oauth2-proxy-test-alpha-config-file")
+		Expect(err).ToNot(HaveOccurred())
+		defer configFile.Close()
+
+		_, err = configFile.Write(config)
+		Expect(err).ToNot(HaveOccurred())
+		defer os.Remove(configFile.Name())
+
+		configFileName := configFile.Name()
+
+		By("Loading the example config")
+		into := &AlphaOptions{}
+		Expect(LoadYAML(configFileName, into)).To(Succeed())
+
+		Expect(into).To(Equal(&AlphaOptions{
+			Providers: []Provider{
+				{
+					ProviderID:   "dex",
+					ProviderType: "oidc",
+					ProviderName: "dex_display_name",
+					ClientID:     "oauth2-proxy",
+					ClientSecret: "b2F1dGgyLXByb3h5LWNsaWVudC1zZWNyZXQK",
+					OIDCConfig: OIDCOptions{
+						OIDCIssuerURL: "http://dex.localhost:4190/dex",
+						UserIDClaim:   "email",
+					},
+					AzureConfig: AzureOptions{
+						AzureTenant: "common",
+					},
+					ApprovalPrompt: "force",
+				},
+			},
+		}))
 	})
 })

@@ -104,8 +104,8 @@ func (o *Options) SetRealClientIPParser(s ipapi.RealClientIPParser)  { o.realCli
 // NewOptions constructs a new Options with defaulted values
 func NewOptions() *Options {
 	return &Options{
-		ProxyPrefix: "/oauth2",
-		// ProviderType:                     "google",
+		ProxyPrefix:         "/oauth2",
+		Providers:           providerDefaults(),
 		PingPath:            "/ping",
 		HTTPAddress:         "127.0.0.1:4180",
 		HTTPSAddress:        ":443",
@@ -114,6 +114,7 @@ func NewOptions() *Options {
 		DisplayHtpasswdForm: true,
 		Cookie:              cookieDefaults(),
 		Session:             sessionOptionsDefaults(),
+		UpstreamServers:     Upstreams{},
 		// AzureTenant:                      "common",
 		SetXAuthRequest:   false,
 		SkipAuthPreflight: false,
@@ -124,6 +125,7 @@ func NewOptions() *Options {
 		SetAuthorization:  false,
 		PassAuthorization: false,
 		PreferEmailToUser: false,
+
 		// Prompt:                           "", // Change to "login" when ApprovalPrompt officially deprecated
 		// ApprovalPrompt:                   "force",
 		// UserIDClaim:                      "email",

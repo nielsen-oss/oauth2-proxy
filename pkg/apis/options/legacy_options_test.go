@@ -12,6 +12,7 @@ var _ = Describe("Legacy Options", func() {
 	Context("ToOptions", func() {
 		It("converts the options as expected", func() {
 			opts := NewOptions()
+			opts.Providers[0].ProviderID = "google_"
 
 			legacyOpts := NewLegacyOptions()
 
@@ -22,6 +23,13 @@ var _ = Describe("Legacy Options", func() {
 			legacyOpts.LegacyUpstreams.ProxyWebSockets = true
 			legacyOpts.LegacyUpstreams.SSLUpstreamInsecureSkipVerify = true
 			legacyOpts.LegacyUpstreams.Upstreams = []string{"http://foo.bar/baz", "file:///var/lib/website#/bar", "static://204"}
+
+			legacyOpts.LegacyProvider = LegacyProvider{
+				ProviderType:   "google",
+				AzureTenant:    "common",
+				ApprovalPrompt: "force",
+				UserIDClaim:    "email",
+			}
 
 			truth := true
 			staticCode := 204

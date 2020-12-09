@@ -5,79 +5,98 @@ type Providers []Provider
 
 // Provider holds all provider configuration
 type Provider struct {
-	ClientID         string `json:"clientID"`
-	ClientSecret     string `json:"clientSecret"`
-	ClientSecretFile string `json:"clientSecretFile"`
+	ClientID         string `json:"clientID,omitempty"`
+	ClientSecret     string `json:"clientSecret,omitempty"`
+	ClientSecretFile string `json:"clientSecretFile,omitempty"`
 
-	KeycloakConfig  KeycloakOptions  `json:"keycloakConfig"`
-	AzureConfig     AzureOptions     `json:"azureConfig"`
-	BitbucketConfig BitbucketOptions `json:"bitbucketConfig"`
-	GitHubConfig    GitHubOptions    `json:"githubConfig"`
-	GitLabConfig    GitLabOptions    `json:"gitlabConfig"`
-	GoogleConfig    GoogleOptions    `json:"googleConfig"`
-	OIDCConfig      OIDCOptions      `json:"oidcConfig"`
-	LoginGovConfig  LoginGovOptions  `json:"loginGovConfig"`
+	KeycloakConfig  KeycloakOptions  `json:"keycloakConfig,omitempty"`
+	AzureConfig     AzureOptions     `json:"azureConfig,omitempty"`
+	BitbucketConfig BitbucketOptions `json:"bitbucketConfig,omitempty"`
+	GitHubConfig    GitHubOptions    `json:"githubConfig,omitempty"`
+	GitLabConfig    GitLabOptions    `json:"gitlabConfig,omitempty"`
+	GoogleConfig    GoogleOptions    `json:"googleConfig,omitempty"`
+	OIDCConfig      OIDCOptions      `json:"oidcConfig,omitempty"`
+	LoginGovConfig  LoginGovOptions  `json:"loginGovConfig,omitempty"`
 
-	ProviderID      string   `json:"providerID"`
-	ProviderType    string   `json:"provider"`
-	ProviderName    string   `json:"providerDisplayName"`
-	ProviderCAFiles []string `json:"providerCAFiles"`
+	ProviderID      string   `json:"providerID,omitempty"`
+	ProviderType    string   `json:"provider,omitempty"`
+	ProviderName    string   `json:"providerDisplayName,omitempty"`
+	ProviderCAFiles []string `json:"providerCAFiles,omitempty"`
 
-	LoginURL          string `json:"loginURL"`
-	RedeemURL         string `json:"redeemURL"`
-	ProfileURL        string `json:"profileURL"`
-	ProtectedResource string `json:"resource"`
-	ValidateURL       string `json:"validateURL"`
-	Scope             string `json:"scope"`
-	Prompt            string `json:"prompt"`
-	ApprovalPrompt    string `json:"approvalPrompt"`
+	LoginURL          string `json:"loginURL,omitempty"`
+	RedeemURL         string `json:"redeemURL,omitempty"`
+	ProfileURL        string `json:"profileURL,omitempty"`
+	ProtectedResource string `json:"resource,omitempty"`
+	ValidateURL       string `json:"validateURL,omitempty"`
+	Scope             string `json:"scope,omitempty"`
+	Prompt            string `json:"prompt,omitempty"`
+	ApprovalPrompt    string `json:"approvalPrompt,omitempty"`
 
-	AcrValues string `json:"acrValues"`
+	AcrValues string `json:"acrValues,omitempty"`
 }
 
 type KeycloakOptions struct {
-	KeycloakGroup string `json:"keycloakGroup"`
+	KeycloakGroup string `json:"keycloakGroup,omitempty"`
 }
 
 type AzureOptions struct {
-	AzureTenant string `json:"azureTenant"`
+	AzureTenant string `json:"azureTenant,omitempty"`
 }
 
 type BitbucketOptions struct {
-	BitbucketTeam       string `json:"bitbucketTeam"`
-	BitbucketRepository string `json:"bitbucketRepository"`
+	BitbucketTeam       string `json:"bitbucketTeam,omitempty"`
+	BitbucketRepository string `json:"bitbucketRepository,omitempty"`
 }
 
 type GitHubOptions struct {
-	GitHubOrg   string   `json:"githubOrg"`
-	GitHubTeam  string   `json:"githubTeam"`
-	GitHubRepo  string   `json:"githubRepo"`
-	GitHubToken string   `json:"githubToken"`
-	GitHubUsers []string `json:"githubUsers"`
+	GitHubOrg   string   `json:"githubOrg,omitempty"`
+	GitHubTeam  string   `json:"githubTeam,omitempty"`
+	GitHubRepo  string   `json:"githubRepo,omitempty"`
+	GitHubToken string   `json:"githubToken,omitempty"`
+	GitHubUsers []string `json:"githubUsers,omitempty"`
 }
 
 type GitLabOptions struct {
-	GitLabGroup []string `json:"gitlabGroups"`
+	GitLabGroup []string `json:"gitlabGroups,omitempty"`
 }
 
 type GoogleOptions struct {
-	GoogleGroups             []string `json:"googleGroup"`
-	GoogleAdminEmail         string   `json:"googleAdminEmail"`
-	GoogleServiceAccountJSON string   `json:"googleServiceAccountJson"`
+	GoogleGroups             []string `json:"googleGroup,omitempty"`
+	GoogleAdminEmail         string   `json:"googleAdminEmail,omitempty"`
+	GoogleServiceAccountJSON string   `json:"googleServiceAccountJson,omitempty"`
 }
 
 type OIDCOptions struct {
-	OIDCIssuerURL                      string `json:"oidcIssuerURL"`
-	InsecureOIDCAllowUnverifiedEmail   bool   `json:"insecureOidcAllowUnverifiedEmail"`
-	InsecureOIDCSkipIssuerVerification bool   `json:"insecureOidcSkipIssuerVerification"`
-	SkipOIDCDiscovery                  bool   `json:"skipOidcDiscovery"`
-	OIDCJwksURL                        string `json:"oidcJwksURL"`
-	OIDCGroupsClaim                    string `json:"oidcGroupsClaim"`
-	UserIDClaim                        string `json:"userIDClaim"`
+	OIDCIssuerURL                      string `json:"oidcIssuerURL,omitempty"`
+	InsecureOIDCAllowUnverifiedEmail   bool   `json:"insecureOidcAllowUnverifiedEmail,omitempty"`
+	InsecureOIDCSkipIssuerVerification bool   `json:"insecureOidcSkipIssuerVerification,omitempty"`
+	SkipOIDCDiscovery                  bool   `json:"skipOidcDiscovery,omitempty"`
+	OIDCJwksURL                        string `json:"oidcJwksURL,omitempty"`
+	OIDCGroupsClaim                    string `json:"oidcGroupsClaim,omitempty"`
+	UserIDClaim                        string `json:"userIDClaim,omitempty"`
 }
 
 type LoginGovOptions struct {
-	JWTKey     string `json:"jwtKey"`
-	JWTKeyFile string `json:"jwtKeyFile"`
-	PubJWKURL  string `json:"pubjwkURL"`
+	JWTKey     string `json:"jwtKey,omitempty"`
+	JWTKeyFile string `json:"jwtKeyFile,omitempty"`
+	PubJWKURL  string `json:"pubjwkURL,omitempty"`
+}
+
+func providerDefaults() Providers {
+	providers := Providers{
+		Provider{
+			ProviderType:   "google",
+			Prompt:         "", // Change to "login" when ApprovalPrompt officially deprecated
+			ApprovalPrompt: "force",
+			AzureConfig: AzureOptions{
+				AzureTenant: "common",
+			},
+			OIDCConfig: OIDCOptions{
+				UserIDClaim:                      "email",
+				InsecureOIDCAllowUnverifiedEmail: false,
+				SkipOIDCDiscovery:                false,
+			},
+		},
+	}
+	return providers
 }
