@@ -27,12 +27,6 @@ func NewLegacyOptions() *LegacyOptions {
 			ProxyWebSockets: true,
 			FlushInterval:   time.Duration(1) * time.Second,
 		},
-		// LegacyProvider: LegacyProvider{
-		// 	ProviderType:   "google",
-		// 	AzureTenant:    "common",
-		// 	ApprovalPrompt: "force",
-		// 	UserIDClaim:    "email",
-		// },
 		Options: *NewOptions(),
 	}
 }
@@ -281,10 +275,6 @@ func (l *LegacyProvider) convert() (Providers, error) {
 		provider.KeycloakConfig = KeycloakOptions{
 			KeycloakGroup: l.KeycloakGroup,
 		}
-	// case "azure":
-	// 	provider.AzureConfig = AzureOptions{
-	// 		AzureTenant: l.AzureTenant,
-	// 	}
 	case "gitlab":
 		provider.GitLabConfig = GitLabOptions{
 			GitLabGroup: l.GitLabGroup,
@@ -297,15 +287,6 @@ func (l *LegacyProvider) convert() (Providers, error) {
 			OIDCJwksURL:                        l.OIDCJwksURL,
 			UserIDClaim:                        l.UserIDClaim,
 		}
-	// case "oidc":
-	// 	provider.OIDCConfig = OIDCOptions{
-	// 		OIDCIssuerURL:                      l.OIDCIssuerURL,
-	// 		InsecureOIDCAllowUnverifiedEmail:   l.InsecureOIDCAllowUnverifiedEmail,
-	// 		InsecureOIDCSkipIssuerVerification: l.InsecureOIDCSkipIssuerVerification,
-	// 		SkipOIDCDiscovery:                  l.SkipOIDCDiscovery,
-	// 		OIDCJwksURL:                        l.OIDCJwksURL,
-	// 		UserIDClaim:                        l.UserIDClaim,
-	// 	}
 	case "login.gov":
 		provider.LoginGovConfig = LoginGovOptions{
 			JWTKey:     l.JWTKey,
@@ -329,7 +310,6 @@ func (l *LegacyProvider) convert() (Providers, error) {
 		provider.ProviderID = l.ProviderName
 		provider.ProviderName = l.ProviderName
 	} else {
-		// TODO (yanasega): should set a better defualt id value
 		provider.ProviderID = l.ProviderType + "_" + l.ClientID
 	}
 

@@ -34,7 +34,8 @@ func Validate(o *options.Options) error {
 		http.DefaultClient = &http.Client{Transport: insecureTransport}
 	}
 
-	// TODO (yanasega): can be skipped in our spesific use case to lighten the multiple providers flow
+	// DSS: can be skipped in our spesific use case to lighten the current multiple providers flow
+	// until the original repo supports it
 	// else if len(o.ProviderCAFiles) > 0 {
 	// 	pool, err := util.GetCertPool(o.ProviderCAFiles)
 	// 	if err == nil {

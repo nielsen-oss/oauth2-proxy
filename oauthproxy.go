@@ -188,9 +188,8 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		AuthOnlyPath:      fmt.Sprintf("%s/auth", opts.ProxyPrefix),
 		UserInfoPath:      fmt.Sprintf("%s/userinfo", opts.ProxyPrefix),
 
-		ProxyPrefix: opts.ProxyPrefix,
-		providers:   opts.GetProviders(),
-		// providerNameOverride:    opts.ProviderName,
+		ProxyPrefix:             opts.ProxyPrefix,
+		providers:               opts.GetProviders(),
 		sessionStore:            sessionStore,
 		serveMux:                upstreamProxy,
 		redirectURL:             redirectURL,
@@ -698,31 +697,33 @@ func (p *OAuthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // SignIn serves a page prompting users to sign in
 func (p *OAuthProxy) SignIn(rw http.ResponseWriter, req *http.Request) {
-	redirect, err := p.GetRedirect(req)
+	_, err := p.GetRedirect(req)
 	if err != nil {
 		logger.Errorf("Error obtaining redirect: %v", err)
 		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", err.Error())
 		return
 	}
 
-	user, ok := p.ManualSignIn(req)
-	if ok {
-		// TODO (yanasega): verify manual sign in is not causeing issues with multiple providers
-		session := &sessionsapi.SessionState{User: user}
-		err = p.SaveSession(rw, req, session)
-		if err != nil {
-			logger.Printf("Error saving session: %v", err)
-			p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", err.Error())
-			return
-		}
-		http.Redirect(rw, req, redirect, http.StatusFound)
+	// DSS: can be skipped in our spesific use case to lighten the current multiple providers flow
+	// until the original repo supports it
+	// user, ok := p.ManualSignIn(req)
+	// if ok {
+	// 	// DSS: multiple providers is not supported
+	// 	session := &sessionsapi.SessionState{User: user}
+	// 	err = p.SaveSession(rw, req, session)
+	// 	if err != nil {
+	// 		logger.Printf("Error saving session: %v", err)
+	// 		p.ErrorPage(rw, http.StatusInternalServerError, "Internal Server Error", err.Error())
+	// 		return
+	// 	}
+	// 	http.Redirect(rw, req, redirect, http.StatusFound)
+	// } else {
+	if p.SkipProviderButton {
+		p.OAuthStart(rw, req)
 	} else {
-		if p.SkipProviderButton {
-			p.OAuthStart(rw, req)
-		} else {
-			p.SignInPage(rw, req, http.StatusOK)
-		}
+		p.SignInPage(rw, req, http.StatusOK)
 	}
+	// }
 }
 
 //UserInfo endpoint outputs session email and preferred username in JSON format

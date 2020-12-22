@@ -17,7 +17,6 @@ require (
 	github.com/mbland/hmacauth v0.0.0-20170912233209-44256dfd4bfa
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/nxadm/tail v1.4.5 // indirect
-	github.com/oauth2-proxy/oauth2-proxy/v7 v7.0.0-20201130193843-d58703001944
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.2
 	github.com/pierrec/lz4 v2.5.2+incompatible
