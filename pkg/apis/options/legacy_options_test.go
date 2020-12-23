@@ -196,9 +196,9 @@ var _ = Describe("Legacy Options", func() {
 		invalidHTTPErrMsg := "could not parse upstream \":foo\": parse \":foo\": missing protocol scheme"
 
 		DescribeTable("convertLegacyUpstreams",
-			func(o *convertUpstreamsTableInput) {
+			func(in *convertUpstreamsTableInput) {
 				legacyUpstreams := LegacyUpstreams{
-					Upstreams:                     o.upstreamStrings,
+					Upstreams:                     in.upstreamStrings,
 					SSLUpstreamInsecureSkipVerify: skipVerify,
 					PassHostHeader:                passHostHeader,
 					ProxyWebSockets:               proxyWebSockets,
@@ -207,14 +207,14 @@ var _ = Describe("Legacy Options", func() {
 
 				upstreams, err := legacyUpstreams.convert()
 
-				if o.errMsg != "" {
+				if in.errMsg != "" {
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal(o.errMsg))
+					Expect(err.Error()).To(Equal(in.errMsg))
 				} else {
 					Expect(err).ToNot(HaveOccurred())
 				}
 
-				Expect(upstreams).To(ConsistOf(o.expectedUpstreams))
+				Expect(upstreams).To(ConsistOf(in.expectedUpstreams))
 			},
 			Entry("with no upstreams", &convertUpstreamsTableInput{
 				upstreamStrings:   []string{},
@@ -816,18 +816,17 @@ var _ = Describe("Legacy Options", func() {
 			GoogleGroups:             []string{"1", "2"},
 		}
 		DescribeTable("convertLegacyProviders",
-			func(o *convertProvidersTableInput) {
+			func(in *convertProvidersTableInput) {
+				providers, err := in.legacyProvider.convert()
 
-				providers, err := o.legacyProvider.convert()
-
-				if o.errMsg != "" {
+				if in.errMsg != "" {
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal(o.errMsg))
+					Expect(err.Error()).To(Equal(in.errMsg))
 				} else {
 					Expect(err).ToNot(HaveOccurred())
 				}
 
-				Expect(providers).To(ConsistOf(o.expectedProviders))
+				Expect(providers).To(ConsistOf(in.expectedProviders))
 			},
 			Entry("with default provider", &convertProvidersTableInput{
 				legacyProvider:    defaultLegacyProvider,
