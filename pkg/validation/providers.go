@@ -29,7 +29,7 @@ func validateProviders(o *options.Options) []string {
 	return msgs
 }
 
-func validateProvider(provider options.Provider, providerIDs map[string]string) []string {
+func validateProvider(provider options.Provider, providerIDs map[string]struct{}) []string {
 	msgs := []string{}
 
 	if provider.ProviderID == "" {
