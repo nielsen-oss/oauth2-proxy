@@ -40,7 +40,7 @@ func validateProvider(provider options.Provider, providerIDs map[string]struct{}
 	if _, ok := providerIDs[provider.ProviderID]; ok {
 		msgs = append(msgs, fmt.Sprintf("multiple providers found with id %s: provider ids must be unique", provider.ProviderID))
 	}
-	providerIDs[provider.ProviderID] = ""
+	providerIDs[provider.ProviderID] = struct{}{}
 
 	if provider.ClientID == "" {
 		msgs = append(msgs, "provider missing setting: client-id")
