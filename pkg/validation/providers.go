@@ -20,7 +20,7 @@ func validateProviders(o *options.Options) []string {
 		msgs = append(msgs, "SkipProviderButton and multiple providers are mutually exclusive")
 	}
 
-	providerIDs := make(map[string]string)
+	providerIDs := make(map[string]struct{})
 
 	for _, provider := range o.Providers {
 		msgs = append(msgs, validateProvider(provider, providerIDs)...)
