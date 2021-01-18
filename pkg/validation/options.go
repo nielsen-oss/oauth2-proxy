@@ -29,7 +29,7 @@ func Validate(o *options.Options) error {
 	msgs = append(msgs, validateSessionCookieMinimal(o)...)
 	msgs = append(msgs, validateRedisSessionStore(o)...)
 	msgs = append(msgs, prefixValues("injectRequestHeaders: ", validateHeaders(o.InjectRequestHeaders)...)...)
-	msgs = append(msgs, prefixValues("injectRespeonseHeaders: ", validateHeaders(o.InjectRequestHeaders)...)...)
+	msgs = append(msgs, prefixValues("injectResponseHeaders: ", validateHeaders(o.InjectResponseHeaders)...)...)
 	msgs = append(msgs, validateProviders(o)...)
 
 	if o.SSLInsecureSkipVerify {
@@ -210,8 +210,19 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 	p.ValidateURL, msgs = parseURL(o.Providers[0].ValidateURL, "validate", msgs)
 	p.ProtectedResource, msgs = parseURL(o.Providers[0].ProtectedResource, "resource", msgs)
 
-	// Make the OIDC Verifier accessible to all providers that can support it
+	// Make the OIDC options available to all providers that support it
+	p.AllowUnverifiedEmail = o.Providers[0].OIDCConfig.InsecureOIDCAllowUnverifiedEmail
+	p.GroupsClaim = o.Providers[0].OIDCConfig.OIDCGroupsClaim
 	p.Verifier = o.GetOIDCVerifier()
+
+	// TODO (@NickMeves) - Remove This
+	// Backwards Compatibility for Deprecated UserIDClaim option
+	if o.Providers[0].OIDCConfig.OIDCEmailClaim == providers.OIDCEmailClaim &&
+		o.Providers[0].OIDCConfig.UserIDClaim != providers.OIDCEmailClaim {
+		p.EmailClaim = o.Providers[0].OIDCConfig.UserIDClaim
+	} else {
+		p.EmailClaim = o.Providers[0].OIDCConfig.OIDCEmailClaim
+	}
 
 	p.SetAllowedGroups(o.Providers[0].AllowedGroups)
 
@@ -230,7 +241,10 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 		p.SetRepo(o.Providers[0].GitHubConfig.GitHubRepo, o.Providers[0].GitHubConfig.GitHubToken)
 		p.SetUsers(o.Providers[0].GitHubConfig.GitHubUsers)
 	case *providers.KeycloakProvider:
-		p.SetGroup(o.Providers[0].KeycloakConfig.KeycloakGroup)
+		// Backwards compatibility with `--keycloak-group` option
+		if len(o.Providers[0].KeycloakConfig.KeycloakGroups) > 0 {
+			p.SetAllowedGroups(o.Providers[0].KeycloakConfig.KeycloakGroups)
+		}
 	case *providers.GoogleProvider:
 		if o.Providers[0].GoogleConfig.GoogleServiceAccountJSON != "" {
 			file, err := os.Open(o.Providers[0].GoogleConfig.GoogleServiceAccountJSON)
@@ -250,15 +264,17 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 		p.SetTeam(o.Providers[0].BitbucketConfig.BitbucketTeam)
 		p.SetRepository(o.Providers[0].BitbucketConfig.BitbucketRepository)
 	case *providers.OIDCProvider:
-		p.AllowUnverifiedEmail = o.Providers[0].OIDCConfig.InsecureOIDCAllowUnverifiedEmail
-		p.UserIDClaim = o.Providers[0].OIDCConfig.UserIDClaim
-		p.GroupsClaim = o.Providers[0].OIDCConfig.OIDCGroupsClaim
 		if p.Verifier == nil {
 			msgs = append(msgs, "oidc provider requires an oidc issuer URL")
 		}
 	case *providers.GitLabProvider:
-		p.AllowUnverifiedEmail = o.Providers[0].OIDCConfig.InsecureOIDCAllowUnverifiedEmail
-		p.Groups = o.Providers[0].GitLabConfig.GitLabGroup
+		p.Groups = o.Providers[0].GitLabConfig.GitLabGroups
+		err := p.AddProjects(o.Providers[0].GitLabConfig.GitlabProjects)
+		if err != nil {
+			msgs = append(msgs, "failed to setup gitlab project access level")
+		}
+		p.SetAllowedGroups(p.PrefixAllowedGroups())
+		p.SetProjectScope()
 
 		if p.Verifier == nil {
 			// Initialize with default verifier for gitlab.com

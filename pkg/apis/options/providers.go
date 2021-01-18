@@ -1,5 +1,7 @@
 package options
 
+import "github.com/oauth2-proxy/oauth2-proxy/v7/providers"
+
 // Providers is a collection of definitions for providers.
 type Providers []Provider
 
@@ -73,7 +75,7 @@ type Provider struct {
 
 type KeycloakOptions struct {
 	//KeycloakGroup enables to restrict login to members of indicated group
-	KeycloakGroup string `json:"keycloakGroup,omitempty"`
+	KeycloakGroups []string `json:"keycloakGroups,omitempty"`
 }
 
 type AzureOptions struct {
@@ -105,8 +107,10 @@ type GitHubOptions struct {
 }
 
 type GitLabOptions struct {
-	// GitLabGroup sets restrict logins to members of this group
-	GitLabGroup []string `json:"gitlabGroups,omitempty"`
+	// GitLabGroups sets restrict logins to members of this group
+	GitLabGroups []string `json:"gitlabGroups,omitempty"`
+	// GitlabProjects sets restrict logins to members of this project
+	GitlabProjects []string `json:"gitlabProjects,omitempty"`
 }
 
 type GoogleOptions struct {
@@ -134,11 +138,13 @@ type OIDCOptions struct {
 	// OIDCJwksURL is the OpenID Connect JWKS URL
 	// eg: https://www.googleapis.com/oauth2/v3/certs
 	OIDCJwksURL string `json:"oidcJwksURL,omitempty"`
+	// OIDCGroupsClaim indicates which OIDC claim contains the user's email
+	OIDCEmailClaim string `json:"oidcEmailClaim,omitempty"`
 	// OIDCGroupsClaim indicates which claim contains the user groups
 	// default set to 'groups'
 	OIDCGroupsClaim string `json:"oidcGroupsClaim,omitempty"`
 	// UserIDClaim indicates which claim contains the user ID
-	// default set to 'email'
+	// Deprecated: Use OIDCEmailClaim
 	UserIDClaim string `json:"userIDClaim,omitempty"`
 }
 
@@ -161,10 +167,11 @@ func providerDefaults() Providers {
 				AzureTenant: "common",
 			},
 			OIDCConfig: OIDCOptions{
-				UserIDClaim:                      "email",
 				InsecureOIDCAllowUnverifiedEmail: false,
 				SkipOIDCDiscovery:                false,
-				OIDCGroupsClaim:                  "groups",
+				UserIDClaim:                      providers.OIDCEmailClaim, // Deprecated: Use OIDCEmailClaim
+				OIDCEmailClaim:                   providers.OIDCEmailClaim,
+				OIDCGroupsClaim:                  providers.OIDCGroupsClaim,
 			},
 		},
 	}

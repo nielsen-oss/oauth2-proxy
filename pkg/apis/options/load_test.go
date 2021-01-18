@@ -47,6 +47,7 @@ var _ = Describe("Load", func() {
 			ApprovalPrompt:  "force",
 			UserIDClaim:     "email",
 			OIDCGroupsClaim: "groups",
+			OIDCEmailClaim:  "email",
 		},
 
 		Options: Options{

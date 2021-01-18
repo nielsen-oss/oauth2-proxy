@@ -132,7 +132,6 @@ func NewFlagSet() *pflag.FlagSet {
 
 	flagSet.StringSlice("email-domain", []string{}, "authenticate emails with the specified domain (may be given multiple times). Use * to authenticate any email")
 	flagSet.StringSlice("whitelist-domain", []string{}, "allowed domains for redirection after authentication. Prefix domain with a . to allow subdomains (eg .example.com)")
-
 	flagSet.String("authenticated-emails-file", "", "authenticate against emails via file (one per line)")
 	flagSet.String("htpasswd-file", "", "additionally authenticate against a htpasswd file. Entries must be created with \"htpasswd -B\" for bcrypt encryption")
 	flagSet.Bool("display-htpasswd-form", true, "display username / password login form if an htpasswd file is provided")
