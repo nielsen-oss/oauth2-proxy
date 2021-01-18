@@ -43,6 +43,7 @@
 
 ## Changes since v6.1.1
 
+- [#947](https://github.com/oauth2-proxy/oauth2-proxy/pull/947) Multiple provider ingestion and validation in alpha options (first stage: [#926](https://github.com/oauth2-proxy/oauth2-proxy/issues/926)) (@yanasega)
 - [#907](https://github.com/oauth2-proxy/oauth2-proxy/pull/907) Introduce alpha configuration option to enable testing of structured configuration (@JoelSpeed)
 - [#938](https://github.com/oauth2-proxy/oauth2-proxy/pull/938) Cleanup missed provider renaming refactor methods (@NickMeves)
 - [#925](https://github.com/oauth2-proxy/oauth2-proxy/pull/925) Fix basic auth legacy header conversion (@JoelSpeed)
