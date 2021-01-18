@@ -138,7 +138,7 @@ type OIDCOptions struct {
 	// OIDCJwksURL is the OpenID Connect JWKS URL
 	// ie: https://www.googleapis.com/oauth2/v3/certs
 	OIDCJwksURL string `json:"oidcJwksURL,omitempty"`
-	// OIDCGroupsClaim indiactes which OIDC claim contains the user's email
+	// OIDCGroupsClaim indicates which OIDC claim contains the user's email
 	OIDCEmailClaim string `json:"oidcEmailClaim,omitempty"`
 	// OIDCGroupsClaim indicates which claim contains the user groups
 	// default set to 'groups'
