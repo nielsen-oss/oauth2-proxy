@@ -19,6 +19,7 @@ import (
 
 	"github.com/coreos/go-oidc"
 	"github.com/mbland/hmacauth"
+	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/middleware"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/sessions"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/logger"
@@ -297,6 +298,11 @@ func TestIsValidRedirect(t *testing.T) {
 			Redirect:       "/\t/\t\\evil.com",
 			ExpectedResult: false,
 		},
+		{
+			Desc:           "openRedirectPartialSubdomain",
+			Redirect:       "http://evilbar.foo",
+			ExpectedResult: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -414,8 +420,9 @@ func Test_redeemCode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = proxy.redeemCode(context.Background(), "www.example.com", "")
-	assert.Error(t, err)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	_, err = proxy.redeemCode(req)
+	assert.Equal(t, providers.ErrMissingCode, err)
 }
 
 func Test_enrichSession(t *testing.T) {
@@ -610,7 +617,7 @@ func TestPassGroupsHeadersWithGroups(t *testing.T) {
 	rw = httptest.NewRecorder()
 	proxy.ServeHTTP(rw, req)
 
-	assert.Equal(t, groups, req.Header["X-Forwarded-Groups"])
+	assert.Equal(t, []string{"a,b"}, req.Header["X-Forwarded-Groups"])
 }
 
 type PassAccessTokenTest struct {
@@ -1748,10 +1755,9 @@ func TestRequestSignature(t *testing.T) {
 	}
 }
 
-func TestGetRedirect(t *testing.T) {
+func Test_getAppRedirect(t *testing.T) {
 	opts := baseTestOptions()
-	opts.WhitelistDomains = append(opts.WhitelistDomains, ".example.com")
-	opts.WhitelistDomains = append(opts.WhitelistDomains, ".example.com:8443")
+	opts.WhitelistDomains = append(opts.WhitelistDomains, ".example.com", ".example.com:8443")
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 	require.NotEmpty(t, opts.ProxyPrefix)
@@ -1854,9 +1860,6 @@ func TestGetRedirect(t *testing.T) {
 			url:  "https://oauth.example.com/foo/bar",
 			headers: map[string]string{
 				"X-Auth-Request-Redirect": "https://a-service.example.com/foo/bar",
-				"X-Forwarded-Proto":       "",
-				"X-Forwarded-Host":        "",
-				"X-Forwarded-Uri":         "",
 			},
 			reverseProxy:     true,
 			expectedRedirect: "https://a-service.example.com/foo/bar",
@@ -1884,10 +1887,9 @@ func TestGetRedirect(t *testing.T) {
 			name: "proxied request with rd query string and some headers set redirects to proxied URL on rd query string",
 			url:  "https://oauth.example.com/foo/bar?rd=https%3A%2F%2Fa%2Dservice%2Eexample%2Ecom%2Ffoo%2Fbaz",
 			headers: map[string]string{
-				"X-Auth-Request-Redirect": "",
-				"X-Forwarded-Proto":       "https",
-				"X-Forwarded-Host":        "another-service.example.com",
-				"X-Forwarded-Uri":         "/seasons/greetings",
+				"X-Forwarded-Proto": "https",
+				"X-Forwarded-Host":  "another-service.example.com",
+				"X-Forwarded-Uri":   "/seasons/greetings",
 			},
 			reverseProxy:     true,
 			expectedRedirect: "https://a-service.example.com/foo/baz",
@@ -1901,8 +1903,10 @@ func TestGetRedirect(t *testing.T) {
 					req.Header.Add(header, value)
 				}
 			}
-			proxy.ReverseProxy = tt.reverseProxy
-			redirect, err := proxy.GetRedirect(req)
+			req = middleware.AddRequestScope(req, &middleware.RequestScope{
+				ReverseProxy: tt.reverseProxy,
+			})
+			redirect, err := proxy.getAppRedirect(req)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedRedirect, redirect)
@@ -2812,7 +2816,7 @@ func TestProxyAllowedGroups(t *testing.T) {
 			test.proxy.ServeHTTP(test.rw, test.req)
 
 			if tt.expectUnauthorized {
-				assert.Equal(t, http.StatusUnauthorized, test.rw.Code)
+				assert.Equal(t, http.StatusForbidden, test.rw.Code)
 			} else {
 				assert.Equal(t, http.StatusOK, test.rw.Code)
 			}

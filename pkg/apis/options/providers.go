@@ -107,8 +107,8 @@ type GitHubOptions struct {
 }
 
 type GitLabOptions struct {
-	// GitLabGroups sets restrict logins to members of this group
-	GitLabGroups []string `json:"gitlabGroups,omitempty"`
+	// GitLabGroup sets restrict logins to members of this group
+	GitLabGroup []string `json:"gitlabGroup,omitempty"`
 	// GitlabProjects sets restrict logins to members of this project
 	GitlabProjects []string `json:"gitlabProjects,omitempty"`
 }

@@ -29,7 +29,7 @@ func Validate(o *options.Options) error {
 	msgs = append(msgs, validateSessionCookieMinimal(o)...)
 	msgs = append(msgs, validateRedisSessionStore(o)...)
 	msgs = append(msgs, prefixValues("injectRequestHeaders: ", validateHeaders(o.InjectRequestHeaders)...)...)
-	msgs = append(msgs, prefixValues("injectResponseHeaders: ", validateHeaders(o.InjectResponseHeaders)...)...)
+	msgs = append(msgs, prefixValues("injectRespeonseHeaders: ", validateHeaders(o.InjectRequestHeaders)...)...)
 	msgs = append(msgs, validateProviders(o)...)
 
 	if o.SSLInsecureSkipVerify {
@@ -42,10 +42,10 @@ func Validate(o *options.Options) error {
 	} else if len(o.Providers[0].ProviderCAFiles) > 0 {
 		pool, err := util.GetCertPool(o.Providers[0].ProviderCAFiles)
 		if err == nil {
-			transport := &http.Transport{
-				TLSClientConfig: &tls.Config{
-					RootCAs: pool,
-				},
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			transport.TLSClientConfig = &tls.Config{
+				RootCAs:    pool,
+				MinVersion: tls.VersionTLS12,
 			}
 
 			http.DefaultClient = &http.Client{Transport: transport}
@@ -212,6 +212,7 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 
 	// Make the OIDC options available to all providers that support it
 	p.AllowUnverifiedEmail = o.Providers[0].OIDCConfig.InsecureOIDCAllowUnverifiedEmail
+	p.EmailClaim = o.Providers[0].OIDCConfig.OIDCEmailClaim
 	p.GroupsClaim = o.Providers[0].OIDCConfig.OIDCGroupsClaim
 	p.Verifier = o.GetOIDCVerifier()
 
@@ -220,8 +221,6 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 	if o.Providers[0].OIDCConfig.OIDCEmailClaim == providers.OIDCEmailClaim &&
 		o.Providers[0].OIDCConfig.UserIDClaim != providers.OIDCEmailClaim {
 		p.EmailClaim = o.Providers[0].OIDCConfig.UserIDClaim
-	} else {
-		p.EmailClaim = o.Providers[0].OIDCConfig.OIDCEmailClaim
 	}
 
 	p.SetAllowedGroups(o.Providers[0].AllowedGroups)
@@ -268,7 +267,7 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 			msgs = append(msgs, "oidc provider requires an oidc issuer URL")
 		}
 	case *providers.GitLabProvider:
-		p.Groups = o.Providers[0].GitLabConfig.GitLabGroups
+		p.Groups = o.Providers[0].GitLabConfig.GitLabGroup
 		err := p.AddProjects(o.Providers[0].GitLabConfig.GitlabProjects)
 		if err != nil {
 			msgs = append(msgs, "failed to setup gitlab project access level")

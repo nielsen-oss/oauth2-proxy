@@ -4,6 +4,59 @@
 
 ## Important Notes
 
+## Breaking Changes
+
+## Changes since v7.0.1
+
+- [#1064](https://github.com/oauth2-proxy/oauth2-proxy/pull/1064) Add support for setting groups on session when using basic auth (@stefansedich)
+- [#1056](https://github.com/oauth2-proxy/oauth2-proxy/pull/1056) Add option for custom logos on the sign in page (@JoelSpeed)
+- [#1054](https://github.com/oauth2-proxy/oauth2-proxy/pull/1054) Update to Go 1.16 (@JoelSpeed)
+- [#1052](https://github.com/oauth2-proxy/oauth2-proxy/pull/1052) Update golangci-lint to latest version (v1.36.0) (@JoelSpeed)
+- [#1043](https://github.com/oauth2-proxy/oauth2-proxy/pull/1043) Refactor Sign In Page rendering and capture all page rendering code in pagewriter package (@JoelSpeed)
+- [#1029](https://github.com/oauth2-proxy/oauth2-proxy/pull/1029) Refactor error page rendering and allow debug messages on error (@JoelSpeed)
+- [#1028](https://github.com/oauth2-proxy/oauth2-proxy/pull/1028) Refactor templates, update theme and provide styled error pages (@JoelSpeed)
+- [#1039](https://github.com/oauth2-proxy/oauth2-proxy/pull/1039) Ensure errors in tests are logged to the GinkgoWriter (@JoelSpeed)
+- [#980](https://github.com/oauth2-proxy/oauth2-proxy/pull/980) Add Prometheus metrics endpoint
+- [#1023](https://github.com/oauth2-proxy/oauth2-proxy/pull/1023) Update docs on Traefik ForwardAuth support without the use of Traefik 'errors' middleware
+
+# V7.0.1
+
+## Release Highlights
+
+- Fixed a bug that meant that flag ordering mattered
+- Fixed a bug where response headers for groups were not being flattened
+
+## Important Notes
+
+N/A
+
+## Breaking Changes
+
+N/A
+
+## Changes since v7.0.0
+
+- [#1020](https://github.com/oauth2-proxy/oauth2-proxy/pull/1020) Flatten array-based response headers (@NickMeves)
+- [#1026](https://github.com/oauth2-proxy/oauth2-proxy/pull/1026) Ensure config flags get parsed correctly when other flags precede them (@JoelSpeed)
+
+# V7.0.0
+
+## Release Highlights
+
+- Major internal improvements to provider interfaces
+- Added group authorization support
+- Improved support for external auth for Traefik
+- Introduced alpha configuration format to allow users to trial new configuration format and alpha features
+- GitLab provider now supports restricting to members of a project
+- Keycloak provider now supports restricting users to members of a set of groups
+- (Alpha) Flexible header configuration allowing user defined mapping of session claims to header values
+
+
+## Important Notes
+
+- [GHSA-4mf2-f3wh-gvf2](https://github.com/oauth2-proxy/oauth2-proxy/security/advisories/GHSA-4mf2-f3wh-gvf2) The whitelist domain feature has been updated to fix a vulnerability that was identified, please see the linked advisory for details
+- [#964](https://github.com/oauth2-proxy/oauth2-proxy/pull/964) Redirect URL generation will attempt secondary strategies
+  in the priority chain if any fail the `IsValidRedirect` security check. Previously any failures fell back to `/`.
 - [#953](https://github.com/oauth2-proxy/oauth2-proxy/pull/953) Keycloak will now use `--profile-url` if set for the userinfo endpoint
   instead of `--validate-url`. `--validate-url` will still work for backwards compatibility.
 - [#957](https://github.com/oauth2-proxy/oauth2-proxy/pull/957) To use X-Forwarded-{Proto,Host,Uri} on redirect detection, `--reverse-proxy` must be `true`.
@@ -36,6 +89,11 @@
 
 ## Breaking Changes
 
+- [#964](https://github.com/oauth2-proxy/oauth2-proxy/pull/964) `--reverse-proxy` must be true to trust `X-Forwarded-*` headers as canonical.
+  These are used throughout the application in redirect URLs, cookie domains and host logging logic. These are the headers:
+  - `X-Forwarded-Proto` instead of `req.URL.Scheme`
+  - `X-Forwarded-Host` instead of `req.Host`
+  - `X-Forwarded-Uri` instead of `req.URL.RequestURI()`
 - [#953](https://github.com/oauth2-proxy/oauth2-proxy/pull/953) In config files & envvar configs, `keycloak_group` is now the plural `keycloak_groups`.
   Flag configs are still `--keycloak-group` but it can be passed multiple times.
 - [#911](https://github.com/oauth2-proxy/oauth2-proxy/pull/911) Specifying a non-existent provider will cause OAuth2-Proxy to fail on startup instead of defaulting to "google".
@@ -60,7 +118,12 @@
 ## Changes since v6.1.1
 
 - [#947](https://github.com/oauth2-proxy/oauth2-proxy/pull/947) Multiple provider ingestion and validation in alpha options (first stage: [#926](https://github.com/oauth2-proxy/oauth2-proxy/issues/926)) (@yanasega)
+- [GHSA-4mf2-f3wh-gvf2](https://github.com/oauth2-proxy/oauth2-proxy/security/advisories/GHSA-4mf2-f3wh-gvf2) Subdomain checking of whitelisted domains could allow unintended redirects (@NickMeves)
+- [#1002](https://github.com/oauth2-proxy/oauth2-proxy/pull/1002) Use logger for logging refreshed session in azure and gitlab provider (@Bibob7)
+- [#799](https://github.com/oauth2-proxy/oauth2-proxy/pull/799) Use comma separated multiple values for header (@lilida)
+- [#903](https://github.com/oauth2-proxy/oauth2-proxy/pull/903) Add docs and generated reference for Alpha configuration (@JoelSpeed)
 - [#995](https://github.com/oauth2-proxy/oauth2-proxy/pull/995) Add Security Policy (@JoelSpeed)
+- [#964](https://github.com/oauth2-proxy/oauth2-proxy/pull/964) Require `--reverse-proxy` true to trust `X-Forwareded-*` type headers (@NickMeves)
 - [#970](https://github.com/oauth2-proxy/oauth2-proxy/pull/970) Fix joined cookie name for those containing underline in the suffix (@peppered)
 - [#953](https://github.com/oauth2-proxy/oauth2-proxy/pull/953) Migrate Keycloak to EnrichSession & support multiple groups for authorization (@NickMeves)
 - [#957](https://github.com/oauth2-proxy/oauth2-proxy/pull/957) Use X-Forwarded-{Proto,Host,Uri} on redirect as last resort (@linuxgemini)
@@ -75,7 +138,7 @@
 - [#916](https://github.com/oauth2-proxy/oauth2-proxy/pull/916) Add AlphaOptions struct to prepare for alpha config loading (@JoelSpeed)
 - [#923](https://github.com/oauth2-proxy/oauth2-proxy/pull/923) Support TLS 1.3 (@aajisaka)
 - [#918](https://github.com/oauth2-proxy/oauth2-proxy/pull/918) Fix log header output (@JoelSpeed)
-- [#911](https://github.com/oauth2-proxy/oauth2-proxy/pull/911) Validate provider type on startup.
+- [#911](https://github.com/oauth2-proxy/oauth2-proxy/pull/911) Validate provider type on startup. (@arcivanov)
 - [#906](https://github.com/oauth2-proxy/oauth2-proxy/pull/906) Set up v6.1.x versioned documentation as default documentation (@JoelSpeed)
 - [#905](https://github.com/oauth2-proxy/oauth2-proxy/pull/905) Remove v5 legacy sessions support (@NickMeves)
 - [#904](https://github.com/oauth2-proxy/oauth2-proxy/pull/904) Set `skip-auth-strip-headers` to `true` by default (@NickMeves)
@@ -103,6 +166,7 @@
 - [#829](https://github.com/oauth2-proxy/oauth2-proxy/pull/820) Rename test directory to testdata (@johejo)
 - [#819](https://github.com/oauth2-proxy/oauth2-proxy/pull/819) Improve CI (@johejo)
 - [#989](https://github.com/oauth2-proxy/oauth2-proxy/pull/989) Adapt isAjax to support mimetype lists (@rassie)
+- [#1013](https://github.com/oauth2-proxy/oauth2-proxy/pull/1013) Update alpine version to 3.13 (@nishanth-pinnapareddy)
 
 # v6.1.1
 

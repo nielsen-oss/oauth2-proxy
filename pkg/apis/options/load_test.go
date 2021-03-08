@@ -15,17 +15,17 @@ import (
 
 var _ = Describe("Load", func() {
 	optionsWithNilProvider := &Options{
-		ProxyPrefix:         "/oauth2",
-		PingPath:            "/ping",
-		HTTPAddress:         "127.0.0.1:4180",
-		HTTPSAddress:        ":443",
-		RealClientIPHeader:  "X-Real-IP",
-		ForceHTTPS:          false,
-		DisplayHtpasswdForm: true,
-		Cookie:              cookieDefaults(),
-		Session:             sessionOptionsDefaults(),
-		SkipAuthPreflight:   false,
-		Logging:             loggingDefaults(),
+		ProxyPrefix:        "/oauth2",
+		PingPath:           "/ping",
+		HTTPAddress:        "127.0.0.1:4180",
+		HTTPSAddress:       ":443",
+		RealClientIPHeader: "X-Real-IP",
+		ForceHTTPS:         false,
+		Cookie:             cookieDefaults(),
+		Session:            sessionOptionsDefaults(),
+		Templates:          templatesDefaults(),
+		SkipAuthPreflight:  false,
+		Logging:            loggingDefaults(),
 	}
 
 	legacyOptionsWithNilProvider := &LegacyOptions{
@@ -46,22 +46,22 @@ var _ = Describe("Load", func() {
 			AzureTenant:     "common",
 			ApprovalPrompt:  "force",
 			UserIDClaim:     "email",
-			OIDCGroupsClaim: "groups",
 			OIDCEmailClaim:  "email",
+			OIDCGroupsClaim: "groups",
 		},
 
 		Options: Options{
-			ProxyPrefix:         "/oauth2",
-			PingPath:            "/ping",
-			HTTPAddress:         "127.0.0.1:4180",
-			HTTPSAddress:        ":443",
-			RealClientIPHeader:  "X-Real-IP",
-			ForceHTTPS:          false,
-			DisplayHtpasswdForm: true,
-			Cookie:              cookieDefaults(),
-			Session:             sessionOptionsDefaults(),
-			SkipAuthPreflight:   false,
-			Logging:             loggingDefaults(),
+			ProxyPrefix:        "/oauth2",
+			PingPath:           "/ping",
+			HTTPAddress:        "127.0.0.1:4180",
+			HTTPSAddress:       ":443",
+			RealClientIPHeader: "X-Real-IP",
+			ForceHTTPS:         false,
+			Cookie:             cookieDefaults(),
+			Session:            sessionOptionsDefaults(),
+			Templates:          templatesDefaults(),
+			SkipAuthPreflight:  false,
+			Logging:            loggingDefaults(),
 		},
 	}
 

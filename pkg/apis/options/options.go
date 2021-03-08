@@ -22,6 +22,7 @@ type Options struct {
 	ProxyPrefix        string   `flag:"proxy-prefix" cfg:"proxy_prefix"`
 	PingPath           string   `flag:"ping-path" cfg:"ping_path"`
 	PingUserAgent      string   `flag:"ping-user-agent" cfg:"ping_user_agent"`
+	MetricsAddress     string   `flag:"metrics-address" cfg:"metrics_address"`
 	HTTPAddress        string   `flag:"http-address" cfg:"http_address"`
 	HTTPSAddress       string   `flag:"https-address" cfg:"https_address"`
 	ReverseProxy       bool     `flag:"reverse-proxy" cfg:"reverse_proxy"`
@@ -37,14 +38,12 @@ type Options struct {
 	EmailDomains            []string `flag:"email-domain" cfg:"email_domains"`
 	WhitelistDomains        []string `flag:"whitelist-domain" cfg:"whitelist_domains"`
 	HtpasswdFile            string   `flag:"htpasswd-file" cfg:"htpasswd_file"`
-	DisplayHtpasswdForm     bool     `flag:"display-htpasswd-form" cfg:"display_htpasswd_form"`
-	CustomTemplatesDir      string   `flag:"custom-templates-dir" cfg:"custom_templates_dir"`
-	Banner                  string   `flag:"banner" cfg:"banner"`
-	Footer                  string   `flag:"footer" cfg:"footer"`
+	HtpasswdUserGroups      []string `flag:"htpasswd-user-group" cfg:"htpasswd_user_groups"`
 
-	Cookie  Cookie         `cfg:",squash"`
-	Session SessionOptions `cfg:",squash"`
-	Logging Logging        `cfg:",squash"`
+	Cookie    Cookie         `cfg:",squash"`
+	Session   SessionOptions `cfg:",squash"`
+	Logging   Logging        `cfg:",squash"`
+	Templates Templates      `cfg:",squash"`
 
 	// Not used in the legacy config, name not allowed to match an external key (upstreams)
 	// TODO(JoelSpeed): Rename when legacy config is removed
@@ -94,18 +93,19 @@ func (o *Options) SetRealClientIPParser(s ipapi.RealClientIPParser) { o.realClie
 // NewOptions constructs a new Options with defaulted values
 func NewOptions() *Options {
 	return &Options{
-		ProxyPrefix:         "/oauth2",
-		Providers:           providerDefaults(),
-		PingPath:            "/ping",
-		HTTPAddress:         "127.0.0.1:4180",
-		HTTPSAddress:        ":443",
-		RealClientIPHeader:  "X-Real-IP",
-		ForceHTTPS:          false,
-		DisplayHtpasswdForm: true,
-		Cookie:              cookieDefaults(),
-		Session:             sessionOptionsDefaults(),
-		SkipAuthPreflight:   false,
-		Logging:             loggingDefaults(),
+		ProxyPrefix:        "/oauth2",
+		MetricsAddress:     "",
+		Providers:          providerDefaults(),
+		PingPath:           "/ping",
+		HTTPAddress:        "127.0.0.1:4180",
+		HTTPSAddress:       ":443",
+		RealClientIPHeader: "X-Real-IP",
+		ForceHTTPS:         false,
+		Cookie:             cookieDefaults(),
+		Session:            sessionOptionsDefaults(),
+		Templates:          templatesDefaults(),
+		SkipAuthPreflight:  false,
+		Logging:            loggingDefaults(),
 	}
 }
 
@@ -134,13 +134,11 @@ func NewFlagSet() *pflag.FlagSet {
 	flagSet.StringSlice("whitelist-domain", []string{}, "allowed domains for redirection after authentication. Prefix domain with a . to allow subdomains (eg .example.com)")
 	flagSet.String("authenticated-emails-file", "", "authenticate against emails via file (one per line)")
 	flagSet.String("htpasswd-file", "", "additionally authenticate against a htpasswd file. Entries must be created with \"htpasswd -B\" for bcrypt encryption")
-	flagSet.Bool("display-htpasswd-form", true, "display username / password login form if an htpasswd file is provided")
-	flagSet.String("custom-templates-dir", "", "path to custom html templates")
-	flagSet.String("banner", "", "custom banner string. Use \"-\" to disable default banner.")
-	flagSet.String("footer", "", "custom footer string. Use \"-\" to disable default footer.")
+	flagSet.StringSlice("htpasswd-user-group", []string{}, "the groups to be set on sessions for htpasswd users (may be given multiple times)")
 	flagSet.String("proxy-prefix", "/oauth2", "the url root path that this proxy should be nested under (e.g. /<oauth2>/sign_in)")
 	flagSet.String("ping-path", "/ping", "the ping endpoint that can be used for basic health checks")
 	flagSet.String("ping-user-agent", "", "special User-Agent that will be used for basic health checks")
+	flagSet.String("metrics-address", "", "the address /metrics will be served on (e.g. \":9100\")")
 	flagSet.String("session-store-type", "cookie", "the session storage provider to use")
 	flagSet.Bool("session-cookie-minimal", false, "strip OAuth tokens from cookie session stores if they aren't needed (cookie session store only)")
 	flagSet.String("redis-connection-url", "", "URL of redis server for redis session storage (eg: redis://HOST[:PORT])")
@@ -159,6 +157,7 @@ func NewFlagSet() *pflag.FlagSet {
 
 	flagSet.AddFlagSet(cookieFlagSet())
 	flagSet.AddFlagSet(loggingFlagSet())
+	flagSet.AddFlagSet(templatesFlagSet())
 
 	return flagSet
 }

@@ -138,8 +138,8 @@ redirect_url="http://localhost:4180/oauth2/callback"
 				},
 				OIDCConfig: options.OIDCOptions{
 					OIDCGroupsClaim: "groups",
-					UserIDClaim:     "email",
 					OIDCEmailClaim:  "email",
+					UserIDClaim:     "email",
 				},
 				ApprovalPrompt: "force",
 			},

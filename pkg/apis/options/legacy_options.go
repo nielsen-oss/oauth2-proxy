@@ -439,7 +439,7 @@ type LegacyProvider struct {
 	GitHubRepo               string   `flag:"github-repo" cfg:"github_repo"`
 	GitHubToken              string   `flag:"github-token" cfg:"github_token"`
 	GitHubUsers              []string `flag:"github-user" cfg:"github_users"`
-	GitLabGroups             []string `flag:"gitlab-group" cfg:"gitlab_groups"`
+	GitLabGroup              []string `flag:"gitlab-group" cfg:"gitlab_groups"`
 	GitlabProjects           []string `flag:"gitlab-project" cfg:"gitlab_projects"`
 	GoogleGroups             []string `flag:"google-group" cfg:"google_group"`
 	GoogleAdminEmail         string   `flag:"google-admin-email" cfg:"google_admin_email"`
@@ -519,7 +519,7 @@ func legacyProviderFlagSet() *pflag.FlagSet {
 	flagSet.String("jwt-key-file", "", "path to the private key file in PEM format used to sign the JWT so that you can say something like -jwt-key-file=/etc/ssl/private/jwt_signing_key.pem: required by login.gov")
 	flagSet.String("pubjwk-url", "", "JWK pubkey access endpoint: required by login.gov")
 
-	flagSet.String("user-id-claim", "email", "which claim contains the user ID")
+	flagSet.String("user-id-claim", providers.OIDCEmailClaim, "(DEPRECATED for `oidc-email-claim`) which claim contains the user ID")
 	flagSet.StringSlice("allowed-group", []string{}, "restrict logins to members of this group (may be given multiple times)")
 
 	return flagSet
@@ -579,7 +579,7 @@ func (l *LegacyProvider) convert() (Providers, error) {
 		}
 	case "gitlab":
 		provider.GitLabConfig = GitLabOptions{
-			GitLabGroups:   l.GitLabGroups,
+			GitLabGroup:    l.GitLabGroup,
 			GitlabProjects: l.GitlabProjects,
 		}
 	case "login.gov":
