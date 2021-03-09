@@ -74,7 +74,7 @@ type Provider struct {
 }
 
 type KeycloakOptions struct {
-	//KeycloakGroup enables to restrict login to members of indicated group
+	// KeycloakGroup enables to restrict login to members of indicated group
 	KeycloakGroups []string `json:"keycloakGroups,omitempty"`
 }
 
