@@ -119,6 +119,28 @@ They may change between releases without notice.
 | `injectResponseHeaders` | _[[]Header](#header)_ | InjectResponseHeaders is used to configure headers that should be added<br/>to responses from the proxy.<br/>This is typically used when using the proxy as an external authentication<br/>provider in conjunction with another proxy such as NGINX and its<br/>auth_request module.<br/>Headers may source values from either the authenticated user's session<br/>or from a static secret value. |
 | `server` | _[Server](#server)_ | Server is used to configure the HTTP(S) server for the proxy application.<br/>You may choose to run both HTTP and HTTPS servers simultaneously.<br/>This can be done by setting the BindAddress and the SecureBindAddress simultaneously.<br/>To use the secure server you must configure a TLS certificate and key. |
 | `metricsServer` | _[Server](#server)_ | MetricsServer is used to configure the HTTP(S) server for metrics.<br/>You may choose to run both HTTP and HTTPS servers simultaneously.<br/>This can be done by setting the BindAddress and the SecureBindAddress simultaneously.<br/>To use the secure server you must configure a TLS certificate and key. |
+| `providers` | _[Providers](#providers)_ | Providers is used to configure multiple providers. |
+
+### AzureOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `azureTenant` | _string_ |  |
+
+### BitbucketOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `bitbucketTeam` | _string_ |  |
+| `bitbucketRepository` | _string_ |  |
 
 ### ClaimSource
 
@@ -142,6 +164,43 @@ A duration string is a is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
+
+### GitHubOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `githubOrg` | _string_ |  |
+| `githubTeam` | _string_ |  |
+| `githubRepo` | _string_ |  |
+| `githubToken` | _string_ |  |
+| `githubUsers` | _[]string_ |  |
+
+### GitLabOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `gitlabGroups` | _[]string_ |  |
+| `gitlabProjects` | _[]string_ |  |
+
+### GoogleOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `googleGroup` | _[]string_ |  |
+| `googleAdminEmail` | _string_ |  |
+| `googleServiceAccountJson` | _string_ |  |
 
 ### Header
 
@@ -171,6 +230,88 @@ make up the header value
 | `claim` | _string_ | Claim is the name of the claim in the session that the value should be<br/>loaded from. |
 | `prefix` | _string_ | Prefix is an optional prefix that will be prepended to the value of the<br/>claim if it is non-empty. |
 | `basicAuthPassword` | _[SecretSource](#secretsource)_ | BasicAuthPassword converts this claim into a basic auth header.<br/>Note the value of claim will become the basic auth username and the<br/>basicAuthPassword will be used as the password value. |
+
+### KeycloakOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `keycloakGroup` | _[]string_ |  |
+
+### LoginGovOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `jwtKey` | _string_ |  |
+| `jwtKeyFile` | _string_ |  |
+| `pubjwkURL` | _string_ |  |
+
+### OIDCOptions
+
+(**Appears on:** [Provider](#provider))
+
+
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `oidcIssuerURL` | _string_ |  |
+| `insecureOidcAllowUnverifiedEmail` | _bool_ |  |
+| `insecureOidcSkipIssuerVerification` | _bool_ |  |
+| `skipOidcDiscovery` | _bool_ |  |
+| `oidcJwksURL` | _string_ |  |
+| `oidcGroupsClaim` | _string_ |  |
+| `oidcEmailClaim` | _string_ |  |
+| `userIDClaim` | _string_ |  |
+
+### Provider
+
+(**Appears on:** [Providers](#providers))
+
+Provider holds all provider configuration
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `clientID` | _string_ |  |
+| `clientSecret` | _string_ |  |
+| `clientSecretFile` | _string_ |  |
+| `keycloakConfig` | _[KeycloakOptions](#keycloakoptions)_ |  |
+| `azureConfig` | _[AzureOptions](#azureoptions)_ |  |
+| `bitbucketConfig` | _[BitbucketOptions](#bitbucketoptions)_ |  |
+| `githubConfig` | _[GitHubOptions](#githuboptions)_ |  |
+| `gitlabConfig` | _[GitLabOptions](#gitlaboptions)_ |  |
+| `googleConfig` | _[GoogleOptions](#googleoptions)_ |  |
+| `oidcConfig` | _[OIDCOptions](#oidcoptions)_ |  |
+| `loginGovConfig` | _[LoginGovOptions](#logingovoptions)_ |  |
+| `providerID` | _string_ |  |
+| `provider` | _string_ |  |
+| `providerDisplayName` | _string_ |  |
+| `providerCAFiles` | _[]string_ |  |
+| `loginURL` | _string_ |  |
+| `redeemURL` | _string_ |  |
+| `profileURL` | _string_ |  |
+| `resource` | _string_ |  |
+| `validateURL` | _string_ |  |
+| `scope` | _string_ |  |
+| `prompt` | _string_ |  |
+| `approvalPrompt` | _string_ |  |
+| `allowedGroups` | _[]string_ |  |
+| `acrValues` | _string_ |  |
+
+### Providers
+
+#### ([[]Provider](#provider) alias)
+
+(**Appears on:** [AlphaOptions](#alphaoptions))
+
+Providers is a collection of definitions for providers.
+
 
 ### SecretSource
 
