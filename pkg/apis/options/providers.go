@@ -74,7 +74,7 @@ type Provider struct {
 }
 
 type KeycloakOptions struct {
-	//KeycloakGroup enables to restrict login to members of indicated group
+	// KeycloakGroup enables to restrict login to members of indicated group
 	KeycloakGroup []string `json:"keycloakGroup,omitempty"`
 }
 
@@ -142,7 +142,7 @@ type OIDCOptions struct {
 	// default set to 'groups'
 	OIDCGroupsClaim string `json:"oidcGroupsClaim,omitempty"`
 	// OIDCEmailClaim indicates which claim contains the user email,
-	// defualt set to 'email'
+	// default set to 'email'
 	OIDCEmailClaim string `json:"oidcEmailClaim,omitempty"`
 	// UserIDClaim indicates which claim contains the user ID
 	// default set to 'email'
