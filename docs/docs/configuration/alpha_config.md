@@ -267,7 +267,7 @@ make up the header value
 | `skipOidcDiscovery` | _bool_ | SkipOIDCDiscovery allows to skip OIDC discovery and use manually supplied Endpoints<br/>default set to 'false' |
 | `oidcJwksURL` | _string_ | OIDCJwksURL is the OpenID Connect JWKS URL<br/>eg: https://www.googleapis.com/oauth2/v3/certs |
 | `oidcGroupsClaim` | _string_ | OIDCGroupsClaim indicates which claim contains the user groups<br/>default set to 'groups' |
-| `oidcEmailClaim` | _string_ | OIDCEmailClaim indicates which claim contains the user email,<br/>defualt set to 'email' |
+| `oidcEmailClaim` | _string_ | OIDCEmailClaim indicates which claim contains the user email,<br/>default set to 'email' |
 | `userIDClaim` | _string_ | UserIDClaim indicates which claim contains the user ID<br/>default set to 'email' |
 
 ### Provider
