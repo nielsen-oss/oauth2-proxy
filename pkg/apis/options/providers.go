@@ -109,8 +109,8 @@ type GitHubOptions struct {
 type GitLabOptions struct {
 	// GitLabGroup sets restrict logins to members of this group
 	GitLabGroup []string `json:"gitlabGroup,omitempty"`
-	// GitlabProjects sets restrict logins to members of this project
-	GitlabProjects []string `json:"gitlabProjects,omitempty"`
+	// GitLabProjects restricts logins to members of any of these projects
+	GitLabProjects []string `json:"gitLabProjects,omitempty"`
 }
 
 type GoogleOptions struct {
@@ -138,7 +138,8 @@ type OIDCOptions struct {
 	// OIDCJwksURL is the OpenID Connect JWKS URL
 	// eg: https://www.googleapis.com/oauth2/v3/certs
 	OIDCJwksURL string `json:"oidcJwksURL,omitempty"`
-	// OIDCGroupsClaim indicates which OIDC claim contains the user's email
+	// OIDCEmailClaim indicates which claim contains the user email,
+	// default set to 'email'
 	OIDCEmailClaim string `json:"oidcEmailClaim,omitempty"`
 	// OIDCGroupsClaim indicates which claim contains the user groups
 	// default set to 'groups'

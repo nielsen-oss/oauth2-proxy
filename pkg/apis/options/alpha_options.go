@@ -29,6 +29,18 @@ type AlphaOptions struct {
 	// or from a static secret value.
 	InjectResponseHeaders []Header `json:"injectResponseHeaders,omitempty"`
 
+	// Server is used to configure the HTTP(S) server for the proxy application.
+	// You may choose to run both HTTP and HTTPS servers simultaneously.
+	// This can be done by setting the BindAddress and the SecureBindAddress simultaneously.
+	// To use the secure server you must configure a TLS certificate and key.
+	Server Server `json:"server,omitempty"`
+
+	// MetricsServer is used to configure the HTTP(S) server for metrics.
+	// You may choose to run both HTTP and HTTPS servers simultaneously.
+	// This can be done by setting the BindAddress and the SecureBindAddress simultaneously.
+	// To use the secure server you must configure a TLS certificate and key.
+	MetricsServer Server `json:"metricsServer,omitempty"`
+
 	// Providers is used to configure multiple providers.
 	Providers Providers `json:"providers,omitempty"`
 }
@@ -39,6 +51,8 @@ func (a *AlphaOptions) MergeInto(opts *Options) {
 	opts.UpstreamServers = a.Upstreams
 	opts.InjectRequestHeaders = a.InjectRequestHeaders
 	opts.InjectResponseHeaders = a.InjectResponseHeaders
+	opts.Server = a.Server
+	opts.MetricsServer = a.MetricsServer
 	opts.Providers = a.Providers
 
 }
@@ -49,5 +63,7 @@ func (a *AlphaOptions) ExtractFrom(opts *Options) {
 	a.Upstreams = opts.UpstreamServers
 	a.InjectRequestHeaders = opts.InjectRequestHeaders
 	a.InjectResponseHeaders = opts.InjectResponseHeaders
+	a.Server = opts.Server
+	a.MetricsServer = opts.MetricsServer
 	a.Providers = opts.Providers
 }

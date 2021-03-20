@@ -268,7 +268,7 @@ func parseProviderInfo(o *options.Options, msgs []string) []string {
 		}
 	case *providers.GitLabProvider:
 		p.Groups = o.Providers[0].GitLabConfig.GitLabGroup
-		err := p.AddProjects(o.Providers[0].GitLabConfig.GitlabProjects)
+		err := p.AddProjects(o.Providers[0].GitLabConfig.GitLabProjects)
 		if err != nil {
 			msgs = append(msgs, "failed to setup gitlab project access level")
 		}

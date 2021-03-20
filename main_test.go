@@ -15,6 +15,7 @@ import (
 
 var _ = Describe("Configuration Loading Suite", func() {
 	const testLegacyConfig = `
+http_address="127.0.0.1:4180"
 upstreams="http://httpbin"
 set_basic_auth="true"
 basic_auth_password="super-secret-password"
@@ -56,6 +57,8 @@ injectResponseHeaders:
     prefix: "Basic "
     basicAuthPassword:
       value: c3VwZXItc2VjcmV0LXBhc3N3b3Jk
+server:
+  bindAddress: "127.0.0.1:4180"
 providers:
 - provider: google
   providerID: google_oauth2-proxy
@@ -71,7 +74,6 @@ providers:
 `
 
 	const testCoreConfig = `
-http_address="0.0.0.0:4180"
 cookie_secret="OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
 email_domains="example.com"
 cookie_secure="false"
@@ -92,7 +94,6 @@ redirect_url="http://localhost:4180/oauth2/callback"
 		opts, err := options.NewLegacyOptions().ToOptions()
 		Expect(err).ToNot(HaveOccurred())
 
-		opts.HTTPAddress = "0.0.0.0:4180"
 		opts.Cookie.Secret = "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
 		opts.EmailDomains = []string{"example.com"}
 		opts.Cookie.Secure = false
@@ -227,7 +228,7 @@ redirect_url="http://localhost:4180/oauth2/callback"
 			configContent:      testCoreConfig,
 			alphaConfigContent: testAlphaConfig + ":",
 			expectedOptions:    func() *options.Options { return nil },
-			expectedErr:        errors.New("failed to load alpha options: error unmarshalling config: error converting YAML to JSON: yaml: line 46: did not find expected key"),
+			expectedErr:        errors.New("failed to load alpha options: error unmarshalling config: error converting YAML to JSON: yaml: line 48: did not find expected key"),
 		}),
 		Entry("with alpha configuration and bad core configuration", loadConfigurationTableInput{
 			configContent:      testCoreConfig + "unknown_field=\"something\"",

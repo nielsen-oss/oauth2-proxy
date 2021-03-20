@@ -17,8 +17,6 @@ var _ = Describe("Load", func() {
 	optionsWithNilProvider := &Options{
 		ProxyPrefix:        "/oauth2",
 		PingPath:           "/ping",
-		HTTPAddress:        "127.0.0.1:4180",
-		HTTPSAddress:       ":443",
 		RealClientIPHeader: "X-Real-IP",
 		ForceHTTPS:         false,
 		Cookie:             cookieDefaults(),
@@ -41,6 +39,11 @@ var _ = Describe("Load", func() {
 			SkipAuthStripHeaders: true,
 		},
 
+		LegacyServer: LegacyServer{
+			HTTPAddress:  "127.0.0.1:4180",
+			HTTPSAddress: ":443",
+		},
+
 		LegacyProvider: LegacyProvider{
 			ProviderType:    "google",
 			AzureTenant:     "common",
@@ -53,8 +56,6 @@ var _ = Describe("Load", func() {
 		Options: Options{
 			ProxyPrefix:        "/oauth2",
 			PingPath:           "/ping",
-			HTTPAddress:        "127.0.0.1:4180",
-			HTTPSAddress:       ":443",
 			RealClientIPHeader: "X-Real-IP",
 			ForceHTTPS:         false,
 			Cookie:             cookieDefaults(),
